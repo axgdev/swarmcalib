@@ -104,3 +104,11 @@ class IvyCalibrationNode:
         IvySendMsg('dl KILL %d 0' %
                     (AC_ID
                     ))
+    def IvySendSwitchBlock(self, AC_ID, block_ID):
+        """Sends a message to switch the flight plan
+        
+        """
+        IvySendMsg('dl BLOCK %d %d' %
+                    (AC_ID,
+                    block_ID
+                    ))
