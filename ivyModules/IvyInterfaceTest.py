@@ -9,13 +9,17 @@ comm=IvyCalibrationNode()
 comm.IvyInitStart()
 
 #dostuff
-comm.IvySendUnKill(5)
-comm.IvySendCalib(5,58,0.5)
+comm.IvySendUnKill(6)
+#comm.IvySendCalib(5,58,0.5)
 time.sleep(1)
 #domorestuff
-comm.IvySendCalib(5,59,0.7)
+#comm.IvySendCalib(5,59,0.7)
+#time.sleep(1)
+
+#comm.IvyGetPos()
+comm.IvySwitchBlock(6, 2)
 time.sleep(1)
-comm.IvySendCalib(5,60,0.9)
-comm.IvyGetPos()
-comm.IvySendKill(5)
+comm.IvySwitchBlock(6, 4)
+time.sleep(0.5)
+comm.IvySendKill(6)
 comm.IvyInitStop()
