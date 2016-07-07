@@ -24,10 +24,18 @@
 
 import finkenPID
 import time
-#import IvyCalibrationNode
+import json
+import datetime
+import calibrationOutput
+import rospy
+from os import walk
+import Ivy_Calibration_Node
+from std_msgs.msg import String
+from geometry_msgs.msg import Pose2D
 
 class Calibrator:
-    'Class to calibrate the copter'
+    """Class to calibrate the copter"""
+
     
     def __init__(self):
     #Here we can put some default variables for deadzone, targetzone and pollingTime and PID parameters
@@ -35,6 +43,7 @@ class Calibrator:
         self.targetYController = finkenPID.PIDController(4, 0, 4)
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
+        self.calibrationParameters = [0,0]
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -52,18 +61,26 @@ class Calibrator:
     def setPollingTime(self, pollingTime):
         self.pollingTime = pollingTime
         
+    #Important INIT
+    def setAircraftID(self, aircraftID):
+        self.aircraftID = aircraftID
+        
     def getXYCoordinates(self):
          #Call here the ivy method, it should return XY coordinates
          #We will set here 
          #self.copterXPos
          #self.copterYPos
-         self.copterXPos += 0.1
-         self.copterYPos -= 0.1
+         myObj = Ivy_Calibration_Node.IvyGetPos()
+         self.copterXPos = myObj.x
+         self.copterYPos = myObj.y
          print("X: "+str(self.copterXPos))
          print("Y: "+str(self.copterYPos))
          
     def killCopter(self):
         #Call kill copter command
+        print("Copter Kill signal")
+        #IvyCalibrationNode.kill()
+        
         return
         
     def sendPitch(self, pitchToSend):
@@ -76,6 +93,7 @@ class Calibrator:
         
     def sendParametersToCopter(self, pitchToSend, rollToSend, yawToSend):
         #IvyCalibrationNode.IvySendParams
+        print("Parameters sent")
         return
         
     def sendYaw(self):
@@ -89,9 +107,11 @@ class Calibrator:
         rollToSend = self.targetYController.step(errorY, self.pollingTime)
         #self.sendPitch(pitchToSend)
         #self.sendRoll(rollToSend)
-        self.sendParametersToCopter(pitchToSend,rollToSend,0)
+        self.sendParametersToCopter(pitchToSend, rollToSend, 0)
+        #Save in list constantly
+        self.calibrationParameters = [pitchToSend, rollToSend] 
         
-    def checkForDeadZone(self):
+    def isInDeadZone(self):
         if ((self.copterXPos > self.maxX) or (self.copterXPos < self.minX) 
             or (self.copterYPos > self.maxY) or(self.copterYPos < self.minY)):
             self.killCopter();
@@ -102,10 +122,15 @@ myCalibrator = Calibrator()
 myCalibrator.setDeadZone(-0.48,1.7,-0.69,2.70) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(0,0)
 myCalibrator.setPollingTime(0.5)
+myCalibrator.setAircraftID(5)
+Ivy_Calibration_Node.IvyInitStart()
+time.sleep(5)
 while(True):
     myCalibrator.getXYCoordinates()
-    if (myCalibrator.checkForDeadZone()):
-        print("Copter Kill signal")
+    if (myCalibrator.isInDeadZone()):
+        myCalibrator.killCopter()
+        #save calibration parameters.. the filename will be a timestamp
+        calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
         break;
     myCalibrator.followTarget()
     time.sleep(myCalibrator.pollingTime)
