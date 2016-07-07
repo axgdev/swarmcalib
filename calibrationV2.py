@@ -17,7 +17,7 @@ import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Pose2D
 #Ivy cal node
-import ivyModules.Ivy_Calibration_Node
+import ivyModules.IvyCalibrationNode
 
 class Calibrator:
     """Class to calibrate the copter"""
@@ -30,6 +30,7 @@ class Calibrator:
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
         self.calibrationParameters = [0,0]
+        self.myIvyCalNode = IvyCalibrationNode()
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -56,7 +57,7 @@ class Calibrator:
          #We will set here 
          #self.copterXPos
          #self.copterYPos
-         myObj = Ivy_Calibration_Node.IvyGetPos()
+         myObj = myIvyCalNode.IvyGetPos()
          self.copterXPos = myObj.x
          self.copterYPos = myObj.y
          print("X: "+str(self.copterXPos))
@@ -65,9 +66,17 @@ class Calibrator:
     def killCopter(self):
         #Call kill copter command
         print("Copter Kill signal")
-        #IvyCalibrationNode.kill()
-        
+        self.myIvyCalNode.IvySendKill(self.aircraftID)
         return
+        
+    def unkillCopter(self):
+        print("Unkilling Copter")
+        self.myIvyCalNode.IvySendUnKill(self.aircraftID)
+        return
+        
+    def sendStartMode(self):
+        print("Sending start mode")
+        self.myIvyCalNode.IvySendStartBlock(self.aircraftID)
         
     def sendPitch(self, pitchToSend):
         #Call send pitch
@@ -109,13 +118,16 @@ myCalibrator.setDeadZone(-0.48,1.7,-0.69,2.70) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(0,0)
 myCalibrator.setPollingTime(0.5)
 myCalibrator.setAircraftID(5)
-Ivy_Calibration_Node.IvyInitStart()
+myCalibrator.myIvyCalNode.IvyInitStart()
+myCalibrator.unkillCopter()
+myCalibrator.sendStartMode()
 while(True):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
         #save calibration parameters.. the filename will be a timestamp
         calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
+        myCalibrator.myIvyCalNode.IvyInitStop()
         break;
     myCalibrator.followTarget()
     time.sleep(myCalibrator.pollingTime)
