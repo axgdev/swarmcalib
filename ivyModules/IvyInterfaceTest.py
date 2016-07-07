@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import time
-from thread import start_new_thread
+#from thread import start_new_thread
 from IvyCalibrationNode import *
-from std_api import *
+from ivy.std_api import *
 
 comm=IvyCalibrationNode()
 comm.IvyInitStart()
