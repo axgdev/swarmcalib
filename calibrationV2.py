@@ -31,6 +31,7 @@ class Calibrator:
         self.copterYPos = 1 #Just to test
         self.calibrationParameters = [0,0]
         self.myIvyCalNode = IvyCalibrationNode()
+        self.airBlockInteger = 2
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -76,7 +77,8 @@ class Calibrator:
         
     def sendStartMode(self):
         print("Sending start mode")
-        self.myIvyCalNode.IvySendStartBlock(self.aircraftID)
+        self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.airBlockInteger)
+        IvySendStartBlock(self.aircraftID)
         
     def sendPitch(self, pitchToSend):
         #Call send pitch
