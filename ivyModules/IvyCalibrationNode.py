@@ -18,11 +18,11 @@ class IvyCalibrationNode:
             IvyStop()
             raise SystemExit()
         IvyStart()
-        #try:
-        #    self.initRosSub()
-        #except rospy.exceptions.ROSInitException as e:
-        #    print('\nInitialization failed due to ROS error, exiting...')
-        #    self.IvyInitStop()
+        try:
+            self.initRosSub()
+        except rospy.exceptions.ROSInitException as e:
+            print('\nInitialization failed due to ROS error, exiting...')
+            self.IvyInitStop()
         time.sleep(1)
         print('Ivy Calibration Node ready!')
 
@@ -34,7 +34,7 @@ class IvyCalibrationNode:
         IvyStop()
 
 
-    def handlePos(data):
+    def handlePos(self, data):
         """ Callback for the ROS subscriber.
 
         """
@@ -94,6 +94,11 @@ class IvyCalibrationNode:
         """
         IvySendMsg('dl KILL %d 1' %
                     (AC_ID
+                    ))
+
+    def IvySendCalParams(self, AC_ID, turn_leds, roll, pitch, yaw):
+        IvySendMsg('dl CALPARAMS %d %d %f %f %f' %
+                    (AC_ID, turn_leds, roll, pitch, yaw
                     ))
 
 
