@@ -19,7 +19,7 @@ class PIDController:
             self.e_sum = self.e_sum + newE * deltat
         else:
             self.e_sum = 0
-        #print('P:{} I:{} D:{} E:{} E_PREV:{} E_SUM:{}'.format(self.p,self.i,self.d,self.e,self.e_prev,self.e_sum))
+        print('P:{} I:{} D:{} E:{} E_PREV:{} E_SUM:{}'.format(self.p,self.i,self.d,self.e,self.e_prev,self.e_sum))
         return (self.p*self.e + self.d*((self.e-self.e_prev)/deltat) + self.i*self.e_sum)
         
     def printValues(self):

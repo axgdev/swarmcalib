@@ -19,6 +19,7 @@ from geometry_msgs.msg import Pose2D
 #Ivy cal node
 import ivyModules.IvyCalibrationNode
 import math
+import numpy
 
 class Calibrator:
     """Class to calibrate the copter"""
@@ -26,8 +27,8 @@ class Calibrator:
     
     def __init__(self):
     #Here we can put some default variables for deadzone, targetzone and pollingTime and PID parameters
-        self.targetXController = finkenPID.PIDController(4, 0, 4) #I set it to zero here for zero control
-        self.targetYController = finkenPID.PIDController(4, 0, 4)
+        self.targetXController = finkenPID.PIDController(4, 0.1, 0.1) #I set it to zero here for zero control
+        self.targetYController = finkenPID.PIDController(4, 0.1, 0.1)
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
         self.copterTheta = 0;
@@ -97,8 +98,8 @@ class Calibrator:
         
     def sendParametersToCopter(self, pitchToSend, rollToSend, yawToSend):
         #IvyCalibrationNode.IvySendParams
-        print("Parameters sent")
-        self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, pitchToSend, rollToSend, yawToSend)
+        print("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
+        self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, rollToSend, pitchToSend, yawToSend)
         return
         
     def sendYaw(self):
@@ -106,8 +107,15 @@ class Calibrator:
         return
         
     def followTarget(self):
-        errorX = (self.copterXPos - self.baseX)*math.cos(self.copterTheta+math.pi/2) #here we put +90 to fix the angle -90 to 270
-        errorY = (self.copterYPos - self.baseY)*math.sin(self.copterTheta+math.pi/2)
+        errorX = (self.copterXPos - self.baseX) #here we put +90 to fix the angle -90 to 270
+        errorY = (self.copterYPos - self.baseY)
+        coord = numpy.array([errorX,errorY])
+        translationMatrix = numpy.matrix([[math.cos(self.copterTheta), math.sin(self.copterTheta)], [-math.sin(self.copterTheta), math.cos(self.copterTheta)]])
+        newCoord = numpy.dot(translationMatrix,coord)
+        print(newCoord);
+        errorX = newCoord.item(0)
+        errorY = newCoord.item(1)
+
         rollToSend = self.targetXController.step(errorX, self.pollingTime)
         pitchToSend = self.targetYController.step(errorY, self.pollingTime)
         #self.sendPitch(pitchToSend)
@@ -126,7 +134,7 @@ class Calibrator:
 myCalibrator = Calibrator()
 myCalibrator.setDeadZone(-0.2,1.0,-0.1,2.1) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(0.4,1)
-myCalibrator.setPollingTime(0.5)
+myCalibrator.setPollingTime(0.25)
 myCalibrator.setAircraftID(6)
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.myIvyCalNode.IvySendCalParams(myCalibrator.aircraftID, 0, 0, 0, 0)
@@ -134,7 +142,7 @@ myCalibrator.unkillCopter()
 time.sleep(3)
 myCalibrator.sendStartMode()
 i = 0;
-while(i<=16):
+while(i<=32):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
