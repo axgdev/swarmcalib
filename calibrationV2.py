@@ -106,8 +106,8 @@ class Calibrator:
         return
         
     def followTarget(self):
-        errorX = (self.copterXPos - self.baseX)*math.cos(self.copterTheta) #here we put +90 to fix the angle -90 to 270
-        errorY = (self.copterYPos - self.baseY)*math.sin(self.copterTheta)
+        errorX = (self.copterXPos - self.baseX)*math.cos(self.copterTheta+math.pi/2) #here we put +90 to fix the angle -90 to 270
+        errorY = (self.copterYPos - self.baseY)*math.sin(self.copterTheta+math.pi/2)
         rollToSend = self.targetXController.step(errorX, self.pollingTime)
         pitchToSend = self.targetYController.step(errorY, self.pollingTime)
         #self.sendPitch(pitchToSend)
