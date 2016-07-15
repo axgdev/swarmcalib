@@ -18,6 +18,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Pose2D
 #Ivy cal node
 import ivyModules.IvyCalibrationNode
+import math
 
 class Calibrator:
     """Class to calibrate the copter"""
@@ -29,11 +30,12 @@ class Calibrator:
         self.targetYController = finkenPID.PIDController(4, 0, 4)
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
+        self.copterTheta = 0;
         self.calibrationParameters = [0,0]
         self.myIvyCalNode = ivyModules.IvyCalibrationNode.IvyCalibrationNode()
         self.airBlockInteger = 2
-	self.emptyBlockInteger = 1
-	self.landingBlockInteger = 4
+        self.emptyBlockInteger = 1
+        self.landingBlockInteger = 4
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -63,15 +65,15 @@ class Calibrator:
          myObj = self.myIvyCalNode.IvyGetPos()
          self.copterXPos = myObj.x
          self.copterYPos = myObj.y
-         print("X: "+str(self.copterXPos))
-         print("Y: "+str(self.copterYPos))
+         self.copterTheta = myObj.theta
+         print("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
          
     def killCopter(self):
         #Call kill copter command
         print("Copter Kill signal")
         self.myIvyCalNode.IvySendKill(self.aircraftID)
-	time.sleep(0.1)
-	self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
+        time.sleep(0.1)
+        self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
         return
         
     def unkillCopter(self):
@@ -81,8 +83,8 @@ class Calibrator:
         
     def sendStartMode(self):
         print("Sending start mode")
-	self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
-	time.sleep(0.1)
+        self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
+        time.sleep(0.1)
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.airBlockInteger)
         
     def sendPitch(self, pitchToSend):
@@ -104,8 +106,8 @@ class Calibrator:
         return
         
     def followTarget(self):
-        errorX = self.copterXPos - self.baseX
-        errorY = self.copterYPos - self.baseY
+        errorX = (self.copterXPos - self.baseX)*math.cos(self.copterTheta) #here we put +90 to fix the angle -90 to 270
+        errorY = (self.copterYPos - self.baseY)*math.sin(self.copterTheta)
         rollToSend = self.targetXController.step(errorX, self.pollingTime)
         pitchToSend = self.targetYController.step(errorY, self.pollingTime)
         #self.sendPitch(pitchToSend)
@@ -118,8 +120,8 @@ class Calibrator:
         if ((self.copterXPos > self.maxX) or (self.copterXPos < self.minX) 
             or (self.copterYPos > self.maxY) or(self.copterYPos < self.minY)):
             self.killCopter();
-            return True;
-        return False;
+            return True
+        return False
 
 myCalibrator = Calibrator()
 myCalibrator.setDeadZone(-0.2,1.0,-0.1,2.1) #minX, maxX, minY, maxY
