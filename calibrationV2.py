@@ -99,6 +99,7 @@ class Calibrator:
     def sendParametersToCopter(self, pitchToSend, rollToSend, yawToSend):
         #IvyCalibrationNode.IvySendParams
         print("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
+	print()
         self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, rollToSend, pitchToSend, yawToSend)
         return
         
@@ -112,12 +113,13 @@ class Calibrator:
         coord = numpy.array([errorX,errorY])
         translationMatrix = numpy.matrix([[math.cos(self.copterTheta), math.sin(self.copterTheta)], [-math.sin(self.copterTheta), math.cos(self.copterTheta)]])
         newCoord = numpy.dot(translationMatrix,coord)
-        print(newCoord);
+        #print(newCoord);
         errorX = newCoord.item(0)
         errorY = newCoord.item(1)
+        print('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
-        rollToSend = self.targetXController.step(errorX, self.pollingTime)
-        pitchToSend = self.targetYController.step(errorY, self.pollingTime)
+        rollToSend = self.targetXController.step(errorY, self.pollingTime)
+        pitchToSend = self.targetYController.step(errorX, self.pollingTime)
         #self.sendPitch(pitchToSend)
         #self.sendRoll(rollToSend)
         self.sendParametersToCopter(pitchToSend, rollToSend, 0)
@@ -134,12 +136,12 @@ class Calibrator:
 myCalibrator = Calibrator()
 myCalibrator.setDeadZone(-0.2,1.0,-0.1,2.1) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(0.4,1)
-myCalibrator.setPollingTime(0.25)
-myCalibrator.setAircraftID(6)
+myCalibrator.setPollingTime(1)
+myCalibrator.setAircraftID(5)
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.myIvyCalNode.IvySendCalParams(myCalibrator.aircraftID, 0, 0, 0, 0)
 myCalibrator.unkillCopter()
-time.sleep(3)
+time.sleep(30)
 myCalibrator.sendStartMode()
 i = 0;
 while(i<=32):
@@ -150,6 +152,7 @@ while(i<=32):
         calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
+    time.sleep(3)
     myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)
