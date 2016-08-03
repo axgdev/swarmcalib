@@ -136,15 +136,16 @@ class Calibrator:
 myCalibrator = Calibrator()
 myCalibrator.setDeadZone(-0.2,1.0,-0.1,2.1) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(0.4,1)
-myCalibrator.setPollingTime(1)
+myCalibrator.setPollingTime(0.01)
 myCalibrator.setAircraftID(5)
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.myIvyCalNode.IvySendCalParams(myCalibrator.aircraftID, 0, 0, 0, 0)
 myCalibrator.unkillCopter()
-time.sleep(30)
+time.sleep(7)
 myCalibrator.sendStartMode()
+time.sleep(3)
 i = 0;
-while(i<=32):
+while(i<=1000):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
@@ -152,7 +153,7 @@ while(i<=32):
         calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
-    time.sleep(3)
+    #time.sleep(3)
     myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)

@@ -9,6 +9,6 @@ comm=IvyCalibrationNode()
 comm.IvyInitStart()
 
 #Just turn on leds
-comm.IvySendKill(5)
+comm.IvySendKill(6)
 time.sleep(2)
 comm.IvyInitStop()
