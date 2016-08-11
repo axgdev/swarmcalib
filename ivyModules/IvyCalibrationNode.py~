@@ -57,7 +57,7 @@ class IvyCalibrationNode:
             print(str(e))
             raise
 
-        rospy.Subscriber("copters/0/pose", Pose2D, self.handlePos)
+        rospy.Subscriber("/copter", Pose2D, self.handlePos)
 
 
     def IvyGetPos(self):
@@ -94,6 +94,11 @@ class IvyCalibrationNode:
         """
         IvySendMsg('dl KILL %d 1' %
                     (AC_ID
+                    ))
+
+    def IvySendCalParams(self, AC_ID, turn_leds, roll, pitch, yaw):
+        IvySendMsg('dl CALPARAMS %d %d %f %f %f' %
+                    (AC_ID, turn_leds, roll, pitch, yaw
                     ))
 
 
