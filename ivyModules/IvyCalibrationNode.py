@@ -71,17 +71,18 @@ class IvyCalibrationNode:
             print(str(e))
 
 
-    def IvySendCalib(self,AC_ID, param_ID, value):
+    def IvySendCalib(self,param_ID, AC_ID, value):
         """Sends the given parameter via Ivy
 
         AC_ID:      ID of the aricraft to be calibrated
         param_ID:   ID of the parameter to be calibrated
-                     phi   = 58
-                     theta = 59
-                     psi   = 60
+                     phi   = 58 roll
+                     theta = 59 pitch
+                     psi   = 60 yaw
         value:      value to be set for the parameter !in degrees!
         """
-        IvySendMsg('dl DL_SETTING %d %d %f' %
+	print("sending calib msg")
+        IvySendMsg('dl SETTING %d %d %f' %
                     (AC_ID,
                     param_ID,
                     value
