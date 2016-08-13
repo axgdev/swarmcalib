@@ -1,11 +1,6 @@
 #swarmcalib
 Swarm Calibration project
 
-Project in python which has 3 parts:
--Communication with Ivy and ROS
--Communication to V-REP
--Calibration
-
 #Paparazzi, Ground station side: 
 ###(Parallel task to Camera side)
 1.  Go into the git "calib" branch of paparazzi:
