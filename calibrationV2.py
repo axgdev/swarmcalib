@@ -10,6 +10,8 @@ import time
 import datetime
 #To save the calibration parameters
 import calibrationOutput
+import logging
+import os
 
 #ROS libraries... maybe the communication python files should have it
 import rospy
@@ -19,6 +21,39 @@ from geometry_msgs.msg import Pose2D
 import ivyModules.IvyCalibrationNode
 import math
 import numpy
+
+""" Superior logging capabilities. Way better than prints :P """
+
+#Set the logger object with the name we have chosen
+logger = logging.getLogger('cal')
+#Set the logger level, for all cases. This will be configured for each handler
+logger.setLevel(logging.DEBUG)
+
+#Create the log folder if it does not exist
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+# create global file handler which logs debug messages
+globalFileHandler = logging.FileHandler("logs/global.log")
+globalFileHandler.setLevel(logging.DEBUG)
+# create a file handler per session with timestamp of creation
+sessionFileHandler = logging.FileHandler("logs/"+calibrationOutput.getFormattedTimeStamp()+".log")
+sessionFileHandler.setLevel(logging.DEBUG)
+# Output to console, we can choose to log only certain info, for now log all
+consoleHandler = logging.StreamHandler()
+consoleHandler.setLevel(logging.DEBUG)
+# create formatter and add it to the handlers
+#Use this formatter for showing the name of the calibration script
+#formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+""" Formatter without name and level on each stamp (cleaner, shorter log)"""
+formatter = logging.Formatter("%(asctime)s - %(message)s")
+consoleHandler.setFormatter(formatter)
+globalFileHandler.setFormatter(formatter)
+sessionFileHandler.setFormatter(formatter)
+# add the handlers to logger
+logger.addHandler(consoleHandler)
+logger.addHandler(globalFileHandler)
+logger.addHandler(sessionFileHandler)
 
 class Calibrator:
     """ Class to calibrate the copter, before starting it, it is 
@@ -123,7 +158,7 @@ class Calibrator:
         self.copterXPos = myObj.x
         self.copterYPos = myObj.y
         self.copterTheta = myObj.theta
-        print("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
+        logger.debug("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
          
     def killCopter(self):
         """ Turns off the copter motors immediately through an Ivy message.
@@ -131,7 +166,7 @@ class Calibrator:
             empty to get the copter ready for the next flight.
         
         """
-        print("Copter Kill signal")
+        logger.info("Copter Kill signal")
         self.myIvyCalNode.IvySendKill(self.aircraftID)
         time.sleep(0.1)
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
@@ -141,7 +176,7 @@ class Calibrator:
         """ Gets the copter out of the KILL status
         
         """
-        print("Unkilling Copter")
+        logger.info("Unkilling Copter")
         self.myIvyCalNode.IvySendUnKill(self.aircraftID)
         return
         
@@ -151,7 +186,7 @@ class Calibrator:
             the remote control
         
         """
-        print("Sending start mode")
+        logger.info("Sending start mode")
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
         time.sleep(0.1)
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.airBlockInteger)
@@ -171,8 +206,8 @@ class Calibrator:
                 direction
         
         """
-        print("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
-        print() #A new line for nicer output.
+        logger.debug("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
+        logger.info("\n") #A new line for nicer output.
         self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, rollToSend, pitchToSend, yawToSend)
         return
         
@@ -203,31 +238,31 @@ class Calibrator:
 
         """Error Accumulation if in safe zone"""
         if (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize):
-        print("entering internal")
+        logger.debug("entering internal")
         self.inInternalZone = True
             self.accumulateX = self.accumulateX + errorX
         self.accumulateY = self.accumulateY + errorY
         self.accumulateIter = self.accumulateIter + 1
         elif (self.inInternalZone == True):
-        print("exiting internal Zone")
+        logger.debug("exiting internal Zone")
             self.accumulateXAvg =(self.accumulateX/self.accumulateIter)*self.targetXController.p/10
         self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
-        print('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
+        logger.debug('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
         self.inInternalZone = False
         #set Pitch calib
-            print("setting pitch")
+            logger.debug("setting pitch")
             self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.accumulateXAvg)
         #set Roll Calib
         self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
 
-        print('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
+        logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
         if (math.fabs(errorX) <= self.internalZoneSize):
             errorX = 0
         if (math.fabs(errorY) <= self.internalZoneSize):
             errorY = 0
 
-        print('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
+        logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
         """ Get output from the controllers based on the error we have """
         rollToSend = self.targetXController.step(errorY, self.pollingTime)
@@ -281,5 +316,5 @@ while(i<=10000000):
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
 myCalibrator.killCopter()
-print("ProgramEnded")
+logger.info("ProgramEnded")
 raise SystemExit()
