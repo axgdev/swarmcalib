@@ -28,3 +28,9 @@ D=0
 20160813:
 Maybe replace the prints of python to the log function, as it allows us
 to add timestamps to the messages automatically
+
+20160814:
+-To turn the leds easily, just lift the copter to make it think its in air
+We have to modify the start mode not to turn off the leds. Or maybe is the
+unkilling doing that.
+-fix indentation ivyCalibrationNode

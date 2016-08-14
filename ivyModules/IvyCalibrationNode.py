@@ -81,7 +81,7 @@ class IvyCalibrationNode:
                      psi   = 60 yaw
         value:      value to be set for the parameter !in degrees!
         """
-	print("sending calib msg")
+        print("sending calib msg")
         IvySendMsg('dl SETTING %d %d %f' %
                     (AC_ID,
                     param_ID,

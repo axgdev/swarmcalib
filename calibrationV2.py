@@ -10,6 +10,8 @@ import time
 import datetime
 #To save the calibration parameters
 import calibrationOutput
+
+""" Logging imports """
 import logging
 import os
 
@@ -238,22 +240,22 @@ class Calibrator:
 
         """Error Accumulation if in safe zone"""
         if (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize):
-        logger.debug("entering internal")
-        self.inInternalZone = True
+            logger.debug("entering internal")
+            self.inInternalZone = True
             self.accumulateX = self.accumulateX + errorX
-        self.accumulateY = self.accumulateY + errorY
-        self.accumulateIter = self.accumulateIter + 1
+            self.accumulateY = self.accumulateY + errorY
+            self.accumulateIter = self.accumulateIter + 1
         elif (self.inInternalZone == True):
-        logger.debug("exiting internal Zone")
+            logger.debug("exiting internal Zone")
             self.accumulateXAvg =(self.accumulateX/self.accumulateIter)*self.targetXController.p/10
-        self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
-        logger.debug('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
-        self.inInternalZone = False
-        #set Pitch calib
+            self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
+            logger.debug('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
+            self.inInternalZone = False
+            #set Pitch calib
             logger.debug("setting pitch")
             self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.accumulateXAvg)
-        #set Roll Calib
-        self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
+            #set Roll Calib
+            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
 
         logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
@@ -293,12 +295,29 @@ myCalibrator.setDeadZone(250,1250,250,950) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
+
+""" Set initial messages in the debug log """
+logger.debug("*********NEW SESSION*********")
+logger.debug("Deadzone-> minX=%f, maxX=%f, minY=%f, maxY=%f" %
+                        (myCalibrator.minX, myCalibrator.maxX,
+                         myCalibrator.minY, myCalibrator.maxY))
+logger.debug("Base position: baseX=%f, baseY=%f" %
+                            (myCalibrator.baseX, myCalibrator.baseX))
+logger.debug("PollingTime = %f" % myCalibrator.pollingTime)
+logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
+            (myCalibrator.targetXController.p, myCalibrator.targetXController.i.
+             myCalibrator.targetXController.d, myCalibrator.targetYController.p,
+             myCalibrator.targetYController.i, myCalibrator.targetYController.d))
+
+""" End of debug log initial messages """
+
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.sendParametersToCopter(0, 0, 0) #We make sure pitch, roll and yaw are 0 at start
 myCalibrator.unkillCopter()
 time.sleep(3) #For the camera to detect the initial position
 myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
+
 i = 0;
 while(i<=10000000):
     myCalibrator.getXYCoordinates()
