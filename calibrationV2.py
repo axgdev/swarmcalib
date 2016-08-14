@@ -203,22 +203,22 @@ class Calibrator:
 
         """Error Accumulation if in safe zone"""
         if (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize):
-        print("entering internal")
-        self.inInternalZone = True
+            print("entering internal")
+            self.inInternalZone = True
             self.accumulateX = self.accumulateX + errorX
-        self.accumulateY = self.accumulateY + errorY
-        self.accumulateIter = self.accumulateIter + 1
+            self.accumulateY = self.accumulateY + errorY
+            self.accumulateIter = self.accumulateIter + 1
         elif (self.inInternalZone == True):
-        print("exiting internal Zone")
+            print("exiting internal Zone")
             self.accumulateXAvg =(self.accumulateX/self.accumulateIter)*self.targetXController.p/10
-        self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
-        print('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
-        self.inInternalZone = False
-        #set Pitch calib
+            self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
+            print('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
+            self.inInternalZone = False
+            #set Pitch calib
             print("setting pitch")
             self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.accumulateXAvg)
-        #set Roll Calib
-        self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
+            #set Roll Calib
+            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
 
         print('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
