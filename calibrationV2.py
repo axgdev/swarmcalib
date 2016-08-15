@@ -66,8 +66,13 @@ class Calibrator:
 
     def __init__(self):
     #Here we can put some default variables for deadzone, targetzone and pollingTime and PID parameters
-        self.targetXController = finkenPID.PIDController(0.0175, 0.0000001, 0) #I set it to zero here for zero control
-        self.targetYController = finkenPID.PIDController(0.0175, 0.0000001, 0)
+        self.pParameter = 2.0/100
+        self.iParameter = 1.0/10000000
+        self.dParameter = 0.0
+        self.targetXController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter) #I set it to zero here for zero control
+        self.targetYController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter)
+        self.internalXController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
+        self.internalYController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
         self.copterTheta = 0;
@@ -237,43 +242,59 @@ class Calibrator:
         """ Overwrite the old errors with transformed errors """
         errorX = newCoord.item(0)
         errorY = newCoord.item(1)
-
-        """Error Accumulation if in safe zone"""
-        if (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize):
-            logger.debug("entering internal")
-            self.inInternalZone = True
-            self.accumulateX = self.accumulateX + errorX
-            self.accumulateY = self.accumulateY + errorY
-            self.accumulateIter = self.accumulateIter + 1
-        elif (self.inInternalZone == True):
-            logger.debug("exiting internal Zone")
-            self.accumulateXAvg =(self.accumulateX/self.accumulateIter)*self.targetXController.p/10
-            self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
-            logger.debug('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
+        
+        """ if we are in safe zone start another PID controller to control
+             calibration parameters and we reset the other controllers
+             note that inInternalZone is a boolean to know when we go
+             in and out of the zone
+        """
+        if (self.isInInternalZone(errorX,errorY)):
+            logger.debug("in safe zone")
+            if (self.inInternalZone == False):
+                if (self.accumulateIter != 0):
+                    self.accumulateX /= self.accumulateIter
+                    self.accumulateY /= self.accumulateIter
+                    logger.debug("accX: " +str(self.accumulateX))
+                    logger.debug("accY: " +str(self.accumulateY))
+                self.sendParametersToCopter(0, -0, 0)
+                self.targetXController.reset()
+                self.targetYController.reset()
+                self.targetXController.p /= 4
+                self.targetXController.i /= 4
+                self.targetYController.p /= 4
+                self.targetYController.i /= 4
+            self.inInternalZone = True            
+            calRollToSend = self.targetXController.step(errorY,self.pollingTime)*(math.pi/180)
+            calPitchToSend = self.targetYController.step(errorX, self.pollingTime)*(math.pi/180)
+            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -calRollToSend)
+            self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, calPitchToSend)
+            logger.debug("Sending calib pitch: %f / roll %f" % (calPitchToSend, -calRollToSend))
+            self.accumulateX = self.accumulateX + calPitchToSend
+            self.accumulateY = self.accumulateY + calRollToSend
+            self.accumulateIter += 1
+            
+            return
+        elif (self.inInternalZone):                
             self.inInternalZone = False
-            #set Pitch calib
-            logger.debug("setting pitch")
-            self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.accumulateXAvg)
-            #set Roll Calib
-            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
-
-        logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
-
-        if (math.fabs(errorX) <= self.internalZoneSize):
-            errorX = 0
-        if (math.fabs(errorY) <= self.internalZoneSize):
-            errorY = 0
+            logger.debug("Exiting internal zone")
+            self.targetXController.p *= 4
+            self.targetXController.i *= 4
+            self.targetYController.p *= 4
+            self.targetYController.i *= 4
 
         logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
         """ Get output from the controllers based on the error we have """
-        rollToSend = self.targetXController.step(errorY, self.pollingTime)
-        pitchToSend = self.targetYController.step(errorX, self.pollingTime)
+        rollToSend = self.targetYController.step(errorY, self.pollingTime)
+        pitchToSend = self.targetXController.step(errorX, self.pollingTime)
         """ Send parameters to copter, our view of the roll is inverted
             what it should be on the copter, so we change the roll sign """
         self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
         #Save in list constantly
-        self.calibrationParameters = [pitchToSend, -rollToSend] 
+        #self.calibrationParameters = [pitchToSend, -rollToSend]
+        
+    def isInInternalZone(self,errorX,errorY):
+        return (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize)
         
     def isInDeadZone(self):
         """ Method to see if copter is outside of the safe zone to fly
@@ -305,7 +326,7 @@ logger.debug("Base position: baseX=%f, baseY=%f" %
                             (myCalibrator.baseX, myCalibrator.baseX))
 logger.debug("PollingTime = %f" % myCalibrator.pollingTime)
 logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
-            (myCalibrator.targetXController.p, myCalibrator.targetXController.i.
+            (myCalibrator.targetXController.p, myCalibrator.targetXController.i,
              myCalibrator.targetXController.d, myCalibrator.targetYController.p,
              myCalibrator.targetYController.i, myCalibrator.targetYController.d))
 
