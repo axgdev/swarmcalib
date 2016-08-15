@@ -33,13 +33,11 @@ Swarm Calibration project
 ###(Parallel task to Paparazzi)
 Please note ROS needs to be installed, in the swarmlab desktop it is
 already installed.
-#(Note to self: CHECK THIS)
 
 1.  You can either go to the calibration user in the computer or download
     clone the git repository "tracking"
-2.  Run in console: roslaunch swarmlab_tracking cam.launch
-3.  Run in console: roslaunch swarmlab_tracking track.launch
-4.  Run in console: roslaunch swarmlab_tracking viz.launch
+2.  Run in console: roslaunch swarmlab_tracking track_cam.launch
+3.  Run in console: roslaunch swarmlab_tracking viz.launch
 
 Camera should be running at this point.
 
