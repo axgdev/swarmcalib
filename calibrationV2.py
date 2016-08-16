@@ -11,6 +11,10 @@ import datetime
 #To save the calibration parameters
 import calibrationOutput
 
+""" Logging imports """
+import logging
+import os
+
 #ROS libraries... maybe the communication python files should have it
 import rospy
 from std_msgs.msg import String
@@ -19,6 +23,39 @@ from geometry_msgs.msg import Pose2D
 import ivyModules.IvyCalibrationNode
 import math
 import numpy
+
+""" Superior logging capabilities. Way better than prints :P """
+
+#Set the logger object with the name we have chosen
+logger = logging.getLogger('cal')
+#Set the logger level, for all cases. This will be configured for each handler
+logger.setLevel(logging.DEBUG)
+
+#Create the log folder if it does not exist
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+# create global file handler which logs debug messages
+globalFileHandler = logging.FileHandler("logs/global.log")
+globalFileHandler.setLevel(logging.DEBUG)
+# create a file handler per session with timestamp of creation
+sessionFileHandler = logging.FileHandler("logs/"+calibrationOutput.getFormattedTimeStamp()+".log")
+sessionFileHandler.setLevel(logging.DEBUG)
+# Output to console, we can choose to log only certain info, for now log all
+consoleHandler = logging.StreamHandler()
+consoleHandler.setLevel(logging.DEBUG)
+# create formatter and add it to the handlers
+#Use this formatter for showing the name of the calibration script
+#formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+""" Formatter without name and level on each stamp (cleaner, shorter log)"""
+formatter = logging.Formatter("%(asctime)s - %(message)s")
+consoleHandler.setFormatter(formatter)
+globalFileHandler.setFormatter(formatter)
+sessionFileHandler.setFormatter(formatter)
+# add the handlers to logger
+logger.addHandler(consoleHandler)
+logger.addHandler(globalFileHandler)
+logger.addHandler(sessionFileHandler)
 
 class Calibrator:
     """ Class to calibrate the copter, before starting it, it is 
@@ -29,8 +66,13 @@ class Calibrator:
 
     def __init__(self):
     #Here we can put some default variables for deadzone, targetzone and pollingTime and PID parameters
-        self.targetXController = finkenPID.PIDController(0.0175, 0.0000001, 0) #I set it to zero here for zero control
-        self.targetYController = finkenPID.PIDController(0.0175, 0.0000001, 0)
+        self.pParameter = 2.0/100
+        self.iParameter = 1.0/10000000
+        self.dParameter = 0.0
+        self.targetXController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter) #I set it to zero here for zero control
+        self.targetYController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter)
+        self.internalXController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
+        self.internalYController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
         self.copterTheta = 0;
@@ -48,6 +90,11 @@ class Calibrator:
         self.accumulateIter = 0
         self.accumulateXAvg = 0
         self.accumulateYAvg = 0
+        self.bestPitch = 0
+        self.bestRoll = 0
+        self.copterXOld = 0
+        self.copterYOld = 0
+        self.absDiff = 1000
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -123,7 +170,7 @@ class Calibrator:
         self.copterXPos = myObj.x
         self.copterYPos = myObj.y
         self.copterTheta = myObj.theta
-        print("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
+        logger.debug("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
          
     def killCopter(self):
         """ Turns off the copter motors immediately through an Ivy message.
@@ -131,7 +178,7 @@ class Calibrator:
             empty to get the copter ready for the next flight.
         
         """
-        print("Copter Kill signal")
+        logger.info("Copter Kill signal")
         self.myIvyCalNode.IvySendKill(self.aircraftID)
         time.sleep(0.1)
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
@@ -141,7 +188,7 @@ class Calibrator:
         """ Gets the copter out of the KILL status
         
         """
-        print("Unkilling Copter")
+        logger.info("Unkilling Copter")
         self.myIvyCalNode.IvySendUnKill(self.aircraftID)
         return
         
@@ -151,7 +198,7 @@ class Calibrator:
             the remote control
         
         """
-        print("Sending start mode")
+        logger.info("Sending start mode")
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.emptyBlockInteger)
         time.sleep(0.1)
         self.myIvyCalNode.IvySendSwitchBlock(self.aircraftID,self.airBlockInteger)
@@ -171,8 +218,8 @@ class Calibrator:
                 direction
         
         """
-        print("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
-        print() #A new line for nicer output.
+        logger.debug("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
+        logger.info("\n") #A new line for nicer output.
         self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, rollToSend, pitchToSend, yawToSend)
         return
         
@@ -200,43 +247,75 @@ class Calibrator:
         """ Overwrite the old errors with transformed errors """
         errorX = newCoord.item(0)
         errorY = newCoord.item(1)
-
-        """Error Accumulation if in safe zone"""
-        if (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize):
-            print("entering internal")
-            self.inInternalZone = True
-            self.accumulateX = self.accumulateX + errorX
-            self.accumulateY = self.accumulateY + errorY
-            self.accumulateIter = self.accumulateIter + 1
-        elif (self.inInternalZone == True):
-            print("exiting internal Zone")
-            self.accumulateXAvg =(self.accumulateX/self.accumulateIter)*self.targetXController.p/10
-            self.accumulateYAvg =(self.accumulateY/self.accumulateIter)*self.targetYController.p/10
-            print('accuX' + str(self.accumulateX) + ' accuIter:' +str(self.accumulateIter))
+        
+        """ if we are in safe zone start another PID controller to control
+             calibration parameters and we reset the other controllers
+             note that inInternalZone is a boolean to know when we go
+             in and out of the zone
+        """
+        if (self.isInInternalZone(errorX,errorY)):
+            logger.debug("in safe zone")
+            if (self.inInternalZone == False):
+                self.sendParametersToCopter(0, -0, 0)
+                self.targetXController.reset()
+                self.targetYController.reset()
+                self.targetXController.p /= 4
+                self.targetXController.i /= 4
+                self.targetYController.p /= 4
+                self.targetYController.i /= 4
+                self.accumulateIter = 0
+            if (self.accumulateIter == 0):  #reset positioning memory and calib average
+                self.accumulateX = 0
+                self.accumulateY = 0
+                self.copterXOld = self.copterXPos
+                self.copterYOld = self.copterYPos
+            self.inInternalZone = True            
+            calRollToSend = self.targetXController.step(errorY,self.pollingTime)*(math.pi/180)
+            calPitchToSend = self.targetYController.step(errorX, self.pollingTime)*(math.pi/180)
+            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -calRollToSend)
+            self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, calPitchToSend)
+            logger.debug("Sending calib pitch: %f / roll %f" % (calPitchToSend, -calRollToSend))
+            self.accumulateX = self.accumulateX + calPitchToSend
+            self.accumulateY = self.accumulateY + calRollToSend
+            self.accumulateIter += 1
+            if (self.accumulateIter >= 100):
+                logger.debug("calculating movement..")
+                self.accumulateIter = 0
+                logger.debug("movement last iteration: " +str(self.absDiff))
+                self.Xdiff = math.fabs(self.copterXPos - self.copterXOld)
+                self.Ydiff = math.fabs(self.copterYPos - self.copterYOld)
+                if (self.absDiff > (self.Xdiff + self.Ydiff)):                    
+                    self.absDiff = self.Xdiff + self.Ydiff
+                    logger.debug("movement this iteration: " +str(self.absDiff))
+                    self.bestPitch = self.accumulateX/100
+                    self.bestRoll = self.accumulateY/100
+                    logger.debug("best average parameters: [" +str(self.bestPitch) +"] " +str(self.bestRoll))
+                self.accumulateIter = 0
+                
+                
+            
+            return
+        elif (self.inInternalZone):                
             self.inInternalZone = False
-            #set Pitch calib
-            print("setting pitch")
-            self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.accumulateXAvg)
-            #set Roll Calib
-            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.accumulateYAvg)
+            logger.debug("Exiting internal zone")
+            self.targetXController.p *= 4
+            self.targetXController.i *= 4
+            self.targetYController.p *= 4
+            self.targetYController.i *= 4
 
-        print('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
-
-        if (math.fabs(errorX) <= self.internalZoneSize):
-            errorX = 0
-        if (math.fabs(errorY) <= self.internalZoneSize):
-            errorY = 0
-
-        print('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
+        logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
         """ Get output from the controllers based on the error we have """
-        rollToSend = self.targetXController.step(errorY, self.pollingTime)
-        pitchToSend = self.targetYController.step(errorX, self.pollingTime)
+        rollToSend = self.targetYController.step(errorY, self.pollingTime)
+        pitchToSend = self.targetXController.step(errorX, self.pollingTime)
         """ Send parameters to copter, our view of the roll is inverted
             what it should be on the copter, so we change the roll sign """
         self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
         #Save in list constantly
-        self.calibrationParameters = [pitchToSend, -rollToSend] 
+        #self.calibrationParameters = [pitchToSend, -rollToSend]
+        
+    def isInInternalZone(self,errorX,errorY):
+        return (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize)
         
     def isInDeadZone(self):
         """ Method to see if copter is outside of the safe zone to fly
@@ -258,14 +337,31 @@ myCalibrator.setDeadZone(250,1250,250,950) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
+
+""" Set initial messages in the debug log """
+logger.debug("*********NEW SESSION*********")
+logger.debug("Deadzone-> minX=%f, maxX=%f, minY=%f, maxY=%f" %
+                        (myCalibrator.minX, myCalibrator.maxX,
+                         myCalibrator.minY, myCalibrator.maxY))
+logger.debug("Base position: baseX=%f, baseY=%f" %
+                            (myCalibrator.baseX, myCalibrator.baseX))
+logger.debug("PollingTime = %f" % myCalibrator.pollingTime)
+logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
+            (myCalibrator.targetXController.p, myCalibrator.targetXController.i,
+             myCalibrator.targetXController.d, myCalibrator.targetYController.p,
+             myCalibrator.targetYController.i, myCalibrator.targetYController.d))
+
+""" End of debug log initial messages """
+
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.sendParametersToCopter(0, 0, 0) #We make sure pitch, roll and yaw are 0 at start
 myCalibrator.unkillCopter()
 time.sleep(3) #For the camera to detect the initial position
 myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
+
 i = 0;
-while(i<=10000000):
+while(i<=1000/0.05):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
@@ -277,9 +373,13 @@ while(i<=10000000):
     myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)
-    
+
+myCalibrator.sendParametersToCopter(0, 0, 0)
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
+time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
 myCalibrator.killCopter()
-print("ProgramEnded")
+logger.info("ProgramEnded")
 raise SystemExit()
