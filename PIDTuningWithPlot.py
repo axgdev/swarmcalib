@@ -238,15 +238,15 @@ class Calibrator:
         
         """ Plotting part """
         """ Roll """
-        self.accumulatedTime++
+        self.accumulatedTime += 1
         plt.figure(1)
         plt.scatter(self.accumulatedTime,errorY)
         plt.pause(0.02)
         
         """ Pitch """
-		plt.figure(2)
-		plt.scatter(self.accumulatedTime,errorX)
-		plt.pause(0.02)
+        plt.figure(2)
+        plt.scatter(self.accumulatedTime,errorX)
+        plt.pause(0.02)
         
         logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
@@ -298,12 +298,12 @@ logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
              
 plt.figure(1)
 plt.ion()
-plt.axis([-300,300,0,10000])
+plt.axis([0,1000,-300,300])
 plt.title('Roll PID error')
 
 plt.figure(2)
 plt.ion()
-plt.axis([-300,300,0,10000])
+plt.axis([0,1000,-300,300])
 plt.title('Pitch PID error')
 
 """ End of debug log initial messages """
@@ -321,7 +321,7 @@ while(i<=10000000):
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
         #save calibration parameters.. the filename will be a timestamp
-        calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
+        #calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
     #time.sleep(3)

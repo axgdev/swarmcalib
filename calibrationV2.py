@@ -67,8 +67,8 @@ class Calibrator:
     def __init__(self):
     #Here we can put some default variables for deadzone, targetzone and pollingTime and PID parameters
         self.pParameter = 2.0/100
-        self.iParameter = 1.0/10000000
-        self.dParameter = 0.0
+        self.iParameter = 2.5/10000000
+        self.dParameter = self.iParameter/3
         self.targetXController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter) #I set it to zero here for zero control
         self.targetYController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter)
         self.internalXController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
@@ -257,6 +257,8 @@ class Calibrator:
             logger.debug("in safe zone")
             if (self.inInternalZone == False):
                 self.sendParametersToCopter(0, -0, 0)
+                self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
+                self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
                 self.targetXController.reset()
                 self.targetYController.reset()
                 self.targetXController.p /= 4
@@ -337,6 +339,9 @@ myCalibrator.setDeadZone(250,1250,250,950) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
+myCalibrator.bestRoll = 0.029*math.pi/180
+myCalibrator.bestPitch = 0.075*math.pi/180
+myCalibrator.absDiff = 25
 
 """ Set initial messages in the debug log """
 logger.debug("*********NEW SESSION*********")
@@ -365,8 +370,11 @@ while(i<=1000/0.05):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
+        myCalibrator.sendParametersToCopter(0, 0, 0)
+        myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
+        myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
         #save calibration parameters.. the filename will be a timestamp
-        calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
+        #calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
     #time.sleep(3)
