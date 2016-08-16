@@ -90,6 +90,11 @@ class Calibrator:
         self.accumulateIter = 0
         self.accumulateXAvg = 0
         self.accumulateYAvg = 0
+        self.bestPitch = 0
+        self.bestRoll = 0
+        self.copterXOld = 0
+        self.copterYOld = 0
+        self.absDiff = 1000
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -251,11 +256,6 @@ class Calibrator:
         if (self.isInInternalZone(errorX,errorY)):
             logger.debug("in safe zone")
             if (self.inInternalZone == False):
-                if (self.accumulateIter != 0):
-                    self.accumulateX /= self.accumulateIter
-                    self.accumulateY /= self.accumulateIter
-                    logger.debug("accX: " +str(self.accumulateX))
-                    logger.debug("accY: " +str(self.accumulateY))
                 self.sendParametersToCopter(0, -0, 0)
                 self.targetXController.reset()
                 self.targetYController.reset()
@@ -263,6 +263,12 @@ class Calibrator:
                 self.targetXController.i /= 4
                 self.targetYController.p /= 4
                 self.targetYController.i /= 4
+                self.accumulateIter = 0
+            if (self.accumulateIter == 0):  #reset positioning memory and calib average
+                self.accumulateX = 0
+                self.accumulateY = 0
+                self.copterXOld = self.copterXPos
+                self.copterYOld = self.copterYPos
             self.inInternalZone = True            
             calRollToSend = self.targetXController.step(errorY,self.pollingTime)*(math.pi/180)
             calPitchToSend = self.targetYController.step(errorX, self.pollingTime)*(math.pi/180)
@@ -272,6 +278,21 @@ class Calibrator:
             self.accumulateX = self.accumulateX + calPitchToSend
             self.accumulateY = self.accumulateY + calRollToSend
             self.accumulateIter += 1
+            if (self.accumulateIter >= 100):
+                logger.debug("calculating movement..")
+                self.accumulateIter = 0
+                logger.debug("movement last iteration: " +str(self.absDiff))
+                self.Xdiff = math.fabs(self.copterXPos - self.copterXOld)
+                self.Ydiff = math.fabs(self.copterYPos - self.copterYOld)
+                if (self.absDiff > (self.Xdiff + self.Ydiff)):                    
+                    self.absDiff = self.Xdiff + self.Ydiff
+                    logger.debug("movement this iteration: " +str(self.absDiff))
+                    self.bestPitch = self.accumulateX/100
+                    self.bestRoll = self.accumulateY/100
+                    logger.debug("best average parameters: [" +str(self.bestPitch) +"] " +str(self.bestRoll))
+                self.accumulateIter = 0
+                
+                
             
             return
         elif (self.inInternalZone):                
@@ -340,7 +361,7 @@ myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
 
 i = 0;
-while(i<=10000000):
+while(i<=1000/0.05):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
@@ -352,7 +373,11 @@ while(i<=10000000):
     myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)
-    
+
+myCalibrator.sendParametersToCopter(0, 0, 0)
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
+time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
 myCalibrator.killCopter()
