@@ -78,7 +78,7 @@ class Calibrator:
         self.copterTheta = 0;
         self.calibrationParameters = [0,0]
         self.myIvyCalNode = ivyModules.IvyCalibrationNode.IvyCalibrationNode()
-        self.airBlockInteger = 2
+        self.airBlockInteger = 3
         self.emptyBlockInteger = 1
         self.landingBlockInteger = 4
         self.internalZoneSize = 50.0
@@ -271,11 +271,16 @@ class Calibrator:
                 self.accumulateY = 0
                 self.copterXOld = self.copterXPos
                 self.copterYOld = self.copterYPos
-            self.inInternalZone = True            
-            calRollToSend = self.targetXController.step(errorY,self.pollingTime)*(math.pi/180)
-            calPitchToSend = self.targetYController.step(errorX, self.pollingTime)*(math.pi/180)
-            self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -calRollToSend)
-            self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, calPitchToSend)
+            self.inInternalZone = True          
+             
+            rollToSend = self.targetXController.step(errorY,self.pollingTime)
+            pitchToSend = self.targetYController.step(errorX, self.pollingTime)            
+            #self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -calRollToSend)
+            #self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, calPitchToSend)
+            self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
+            calRollToSend=rollToSend*(math.pi/180)
+            calPitchToSend=pitchToSend*(math.pi/180)
+            
             logger.debug("Sending calib pitch: %f / roll %f" % (calPitchToSend, -calRollToSend))
             self.accumulateX = self.accumulateX + calPitchToSend
             self.accumulateY = self.accumulateY + calRollToSend
@@ -286,12 +291,17 @@ class Calibrator:
                 logger.debug("movement last iteration: " +str(self.absDiff))
                 self.Xdiff = math.fabs(self.copterXPos - self.copterXOld)
                 self.Ydiff = math.fabs(self.copterYPos - self.copterYOld)
+                logger.debug("movement this iteration: " +str(self.Xdiff + self.Ydiff))
                 if (self.absDiff > (self.Xdiff + self.Ydiff)):                    
                     self.absDiff = self.Xdiff + self.Ydiff
-                    logger.debug("movement this iteration: " +str(self.absDiff))
+                    
                     self.bestPitch = self.accumulateX/100
                     self.bestRoll = self.accumulateY/100
-                    logger.debug("best average parameters: [" +str(self.bestPitch) +"] " +str(self.bestRoll))
+                    
+                    
+                    logger.debug("new calib values: Roll: " +str(-self.bestRoll) + "  Pitch: " + str(self.bestPitch))        
+                    self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
+                    self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
                 self.accumulateIter = 0
                 
                 
@@ -339,9 +349,9 @@ myCalibrator.setDeadZone(250,1250,250,950) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
-myCalibrator.bestRoll = 0.029*math.pi/180
-myCalibrator.bestPitch = 0.075*math.pi/180
-myCalibrator.absDiff = 25
+myCalibrator.bestRoll = 0.0*math.pi/180
+myCalibrator.bestPitch = 0.0*math.pi/180
+myCalibrator.absDiff = 500
 
 """ Set initial messages in the debug log """
 logger.debug("*********NEW SESSION*********")
