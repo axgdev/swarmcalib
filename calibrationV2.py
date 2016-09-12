@@ -71,14 +71,12 @@ class Calibrator:
         self.dParameter = self.iParameter/3
         self.targetXController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter) #I set it to zero here for zero control
         self.targetYController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter)
-        self.internalXController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
-        self.internalYController = finkenPID.PIDController(0.005, 0.0000001/4, 0)
         self.copterXPos = 1 #Just to test
         self.copterYPos = 1 #Just to test
         self.copterTheta = 0;
         self.calibrationParameters = [0,0]
         self.myIvyCalNode = ivyModules.IvyCalibrationNode.IvyCalibrationNode()
-        self.airBlockInteger = 3
+        self.airBlockInteger = 2
         self.emptyBlockInteger = 1
         self.landingBlockInteger = 4
         self.internalZoneSize = 50.0
@@ -257,14 +255,16 @@ class Calibrator:
             logger.debug("in safe zone")
             if (self.inInternalZone == False):
                 self.sendParametersToCopter(0, -0, 0)
-                self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
-                self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
-                self.targetXController.reset()
-                self.targetYController.reset()
+                #self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
+                #self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
+                
                 self.targetXController.p /= 4
                 self.targetXController.i /= 4
                 self.targetYController.p /= 4
                 self.targetYController.i /= 4
+                self.targetYController.d /= 4
+                self.targetYController.d /= 4
+                
                 self.accumulateIter = 0
             if (self.accumulateIter == 0):  #reset positioning memory and calib average
                 self.accumulateX = 0
@@ -292,20 +292,28 @@ class Calibrator:
                 self.Xdiff = math.fabs(self.copterXPos - self.copterXOld)
                 self.Ydiff = math.fabs(self.copterYPos - self.copterYOld)
                 logger.debug("movement this iteration: " +str(self.Xdiff + self.Ydiff))
-                if (self.absDiff > (self.Xdiff + self.Ydiff)):                    
+                if (50 > (self.Xdiff + self.Ydiff)):                    
                     self.absDiff = self.Xdiff + self.Ydiff
                     
-                    self.bestPitch = self.accumulateX/100
-                    self.bestRoll = self.accumulateY/100
+                    
+                    self.newPitch = self.accumulateX/100
+                    self.newRoll = self.accumulateY/100
+                    
+                    self.bestPitch = (self.bestPitch + self.newPitch)/2
+                    self.bestRoll = (self.bestPitch + self.newPitch)/2
                     
                     
-                    logger.debug("new calib values: Roll: " +str(-self.bestRoll) + "  Pitch: " + str(self.bestPitch))        
+                    
+                    logger.debug("new calib values: Roll: " +str(-self.newRoll) + "  Pitch: " + str(self.newPitch))
+                    logger.debug("total calib values: Roll: " +str(-self.bestoll) + "  Pitch: " + str(best.newPitch))         
                     self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
                     self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
+                    self.sendParametersToCopter(0, -0, 0)
+                    self.targetXController.reset()
+                    self.targetYController.reset()
                 self.accumulateIter = 0
                 
                 
-            
             return
         elif (self.inInternalZone):                
             self.inInternalZone = False
@@ -314,6 +322,8 @@ class Calibrator:
             self.targetXController.i *= 4
             self.targetYController.p *= 4
             self.targetYController.i *= 4
+            self.targetXController.d *= 4
+            self.targetYController.d *= 4
 
         logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
