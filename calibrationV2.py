@@ -66,9 +66,10 @@ class Calibrator:
 
     def __init__(self):
     #Here we can put some default variables for deadzone, targetzone and pollingTime and PID parameters
-        self.pParameter = 2.0/100
-        self.iParameter = 2.5/10000000
-        self.dParameter = self.iParameter/3
+        self.pParameter = 0.015
+        self.iParameter = 0
+        self.dParameter = 0.0015
+        self.iParameter=0
         self.targetXController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter) #I set it to zero here for zero control
         self.targetYController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter)
         self.copterXPos = 1 #Just to test
@@ -79,8 +80,7 @@ class Calibrator:
         self.airBlockInteger = 2
         self.emptyBlockInteger = 1
         self.landingBlockInteger = 4
-        self.internalZoneSize = 50.0
-        self.externalZoneSize = 75.0
+        self.internalZoneSize = 75.0
         self.inInternalZone = False
         self.inExternalZone = True
         self.accumulateX = 0.0
@@ -93,6 +93,7 @@ class Calibrator:
         self.copterXOld = 0
         self.copterYOld = 0
         self.absDiff = 1000
+        self.calibIter = 0
     
     #Important INIT
     def setBasePosition(self, posX, posY):
@@ -168,7 +169,7 @@ class Calibrator:
         self.copterXPos = myObj.x
         self.copterYPos = myObj.y
         self.copterTheta = myObj.theta
-        logger.debug("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
+        #logger.debug("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
          
     def killCopter(self):
         """ Turns off the copter motors immediately through an Ivy message.
@@ -216,8 +217,8 @@ class Calibrator:
                 direction
         
         """
-        logger.debug("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
-        logger.info("\n") #A new line for nicer output.
+        #logger.debug("roll: "+str(rollToSend)+" pitch: "+str(pitchToSend))
+        #logger.info("\n") #A new line for nicer output.
         self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, rollToSend, pitchToSend, yawToSend)
         return
         
@@ -252,20 +253,19 @@ class Calibrator:
              in and out of the zone
         """
         if (self.isInInternalZone(errorX,errorY)):
-            logger.debug("in safe zone")
+            #logger.debug("in safe zone")
             if (self.inInternalZone == False):
                 self.sendParametersToCopter(0, -0, 0)
                 #self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
                 #self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
-                
+                """
                 self.targetXController.p /= 4
                 self.targetXController.i /= 4
                 self.targetYController.p /= 4
                 self.targetYController.i /= 4
-                self.targetYController.d /= 4
-                self.targetYController.d /= 4
-                
+                """
                 self.accumulateIter = 0
+                
             if (self.accumulateIter == 0):  #reset positioning memory and calib average
                 self.accumulateX = 0
                 self.accumulateY = 0
@@ -278,36 +278,37 @@ class Calibrator:
             #self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -calRollToSend)
             #self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, calPitchToSend)
             self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
+            #logger.debug("Sending calib pitch in degrees>: %f / roll %f" % (pitchToSend, -rollToSend))
             calRollToSend=rollToSend*(math.pi/180)
             calPitchToSend=pitchToSend*(math.pi/180)
             
-            logger.debug("Sending calib pitch: %f / roll %f" % (calPitchToSend, -calRollToSend))
+            #logger.debug("Sending calib pitch: %f / roll %f" % (calPitchToSend, -calRollToSend))
             self.accumulateX = self.accumulateX + calPitchToSend
             self.accumulateY = self.accumulateY + calRollToSend
             self.accumulateIter += 1
             if (self.accumulateIter >= 100):
-                logger.debug("calculating movement..")
+                #logger.debug("calculating movement..")
                 self.accumulateIter = 0
                 logger.debug("movement last iteration: " +str(self.absDiff))
                 self.Xdiff = math.fabs(self.copterXPos - self.copterXOld)
                 self.Ydiff = math.fabs(self.copterYPos - self.copterYOld)
                 logger.debug("movement this iteration: " +str(self.Xdiff + self.Ydiff))
-                if (50 > (self.Xdiff + self.Ydiff)):                    
+                if (75 > (self.Xdiff + self.Ydiff)):                    
                     self.absDiff = self.Xdiff + self.Ydiff
                     
                     
                     self.newPitch = self.accumulateX/100
                     self.newRoll = self.accumulateY/100
                     
-                    self.bestPitch = (self.bestPitch + self.newPitch)/2
-                    self.bestRoll = (self.bestPitch + self.newPitch)/2
+                    self.bestPitch = (self.bestPitch + self.newPitch)
+                    self.bestRoll = (self.bestPitch + self.newPitch)
+                    self.calibIter += 1
                     
                     
-                    
-                    logger.debug("new calib values: Roll: " +str(-self.newRoll) + "  Pitch: " + str(self.newPitch))
-                    logger.debug("total calib values: Roll: " +str(-self.bestoll) + "  Pitch: " + str(best.newPitch))         
-                    self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
-                    self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
+                    logger.debug("new calib values: Roll: " +str(-self.newRoll/self.calibIter) + "  Pitch: " + str(self.newPitch/self.calibIter))
+                    logger.debug("total calib values: Roll: " +str(-self.bestRoll/self.calibIter) + "  Pitch: " + str(self.newPitch/self.calibIter))         
+                    #self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.bestRoll)
+                    #self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.bestPitch)
                     self.sendParametersToCopter(0, -0, 0)
                     self.targetXController.reset()
                     self.targetYController.reset()
@@ -317,15 +318,14 @@ class Calibrator:
             return
         elif (self.inInternalZone):                
             self.inInternalZone = False
-            logger.debug("Exiting internal zone")
+            #logger.debug("Exiting internal zone")
+            """
             self.targetXController.p *= 4
             self.targetXController.i *= 4
             self.targetYController.p *= 4
             self.targetYController.i *= 4
-            self.targetXController.d *= 4
-            self.targetYController.d *= 4
-
-        logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
+            """
+        #logger.debug('ErrorX: '+str(errorX)+' ErrorY: '+str(errorY))
 
         """ Get output from the controllers based on the error we have """
         rollToSend = self.targetYController.step(errorY, self.pollingTime)
@@ -386,25 +386,27 @@ myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
 
 i = 0;
-while(i<=1000/0.05):
+while(i<=12000):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
         myCalibrator.sendParametersToCopter(0, 0, 0)
-        myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
-        myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
-        #save calibration parameters.. the filename will be a timestamp
-        #calibrationOutput.saveObject(myCalibrator.calibrationParameters,'')
+        #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
+        #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
+        
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
     #time.sleep(3)
-    myCalibrator.followTarget()
+    #myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)
 
+myCalibrator.bestRoll /= myCalibrator.calibIter
+myCalibrator.bestPitch /= myCalibrator.calibIter
 myCalibrator.sendParametersToCopter(0, 0, 0)
 myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
 myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
+logger.debug("final calib values: Roll: " +str(-myCalibrator.bestRoll) + "  Pitch: " + str(myCalibrator.newPitch))       
 time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)

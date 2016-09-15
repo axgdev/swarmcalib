@@ -11,10 +11,11 @@ comm.IvyInitStart()
 
 
 #dostuff
-comm.IvySendUnKill(6)
+comm.IvySendUnKill(5)
+
+comm.IvySendCalib(5, 58, 0.00640)
+comm.IvySendCalib(5, 59, 0.0065)
 """
-#comm.IvySendCalib(5,58,0.5)
-time.sleep(1.5)
 #domorestuff
 #comm.IvySendCalib(5,59,0.7)
 #time.sleep(1)
@@ -25,6 +26,6 @@ time.sleep(2)
 comm.IvySendSwitchBlock(6, 4)
 time.sleep(1)
 """
-comm.IvySendCalParams(6, 1, 0, 0, 0)
+time.sleep(2)
 comm.IvySendKill(6)
 comm.IvyInitStop()
