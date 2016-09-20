@@ -149,7 +149,7 @@ class Calibrator:
         self.aircraftID = aircraftID
 
 
-"""IVY FUNCTIONS:"""
+    """IVY FUNCTIONS:"""
     def getXYCoordinates(self):
         """ Calls the ivy node and the ivy node calls ROS to get the
             position values from the tracking software, then we save them
@@ -206,7 +206,7 @@ class Calibrator:
         return
 
 
-"""Auxiliary functions for the calibration routine:"""
+    """Auxiliary functions for the calibration routine:"""
     def isInInternalZone(self,errorX,errorY):
         return (math.fabs(errorX) < self.internalZoneSize) and (math.fabs(errorY) < self.internalZoneSize)
 
@@ -222,7 +222,7 @@ class Calibrator:
             return True
         return False
 
-"""Main Calibration logic:"""
+    """Main Calibration logic:"""
     def followTarget(self):
         """ One of the main functions of the calibration. Once we have
             the position of the copter and setPoint (basePosition) we
