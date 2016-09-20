@@ -285,9 +285,11 @@ class Calibrator:
                     """ Saving calibration parameters to file. No worries this 
                         is non blocking call, it runs in separate thread.
                         Important to save it everytime just in case the app is
-                        interrumpted
+                        interrumpted, uncomment if you want to use it
+                    """
                     """
                     calibrationOutput.saveCalibration(self.bestPitch,self.bestRoll,self.absDiff,"pitch","roll","diff")
+                    """
                     self.newPitch = self.accumulateX/100
                     self.newRoll = self.accumulateY/100
                     self.bestPitch = (self.bestPitch + self.newPitch)
@@ -334,12 +336,14 @@ myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
 
 
-""" Reading previous best calibration parameters """
+""" Reading previous best calibration parameters, uncomment if you want to use it """
+"""
 inputParams = calibrationOutput.loadCalibration()
 if (len(inputParams) > 1)
     myCalibrator.bestPitch = inputParams[0]*math.pi/180
     myCalibrator.bestRoll = inputParams[1]*math.pi/180
     myCalibrator.absDiff = inputParams[2]*math.pi/180
+"""
 
 """ Set initial messages in the debug log """
 logger.debug("*********NEW SESSION*********")
