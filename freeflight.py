@@ -69,7 +69,7 @@ class Calibrator:
         """PID parameters:"""
         self.pParameter = 0.015
         self.iParameter = 0
-        self.dParameter = 0.001
+        self.dParameter = 0.0015
         self.targetXController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter) #I set it to zero here for zero control
         self.targetYController = finkenPID.PIDController(self.pParameter, self.iParameter, self.dParameter)
 
@@ -81,7 +81,7 @@ class Calibrator:
         self.landingBlockInteger = 4
 
         """calibration routine constants and buffers:"""
-        self.internalZoneSize = 150.0
+        self.internalZoneSize = 100.0
         self.inInternalZone = False
         self.inExternalZone = True
         self.accumulateX = 0.0
@@ -250,14 +250,12 @@ class Calibrator:
 
             if (self.inInternalZone == False):  #entering internal zone so reset the Iterator and position buffer
                 self.accumulateIter = 0
-            if (self.accumulateIter == 0):
                 self.accumulateX = 0
                 self.accumulateY = 0
                 self.copterXOld = self.copterXPos
                 self.copterYOld = self.copterYPos
-                
             self.inInternalZone = True
-            
+
             rollToSend = self.targetXController.step(errorY,self.pollingTime)
             pitchToSend = self.targetYController.step(errorX, self.pollingTime)
             self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
@@ -270,9 +268,9 @@ class Calibrator:
             self.accumulateX = self.accumulateX + calPitchToSend
             self.accumulateY = self.accumulateY + calRollToSend
             self.accumulateIter += 1
-            
 
-            if (self.accumulateIter >= 150):
+
+            if (self.accumulateIter >= 100):
                 """after 100 iterations, check absolute movement and,
                    if low enough, calibrate
                    """
@@ -280,7 +278,7 @@ class Calibrator:
                 self.Xdiff = math.fabs(self.copterXPos - self.copterXOld)
                 self.Ydiff = math.fabs(self.copterYPos - self.copterYOld)
                 logger.debug("movement over last 100 iterations: " +str(self.Xdiff + self.Ydiff))
-                if (80 > (self.Xdiff + self.Ydiff)):
+                if (75 > (self.Xdiff + self.Ydiff)):
                     """movement below treshold for 100 iterations,
                        use accumulated PID values for calibration
                        """
@@ -292,10 +290,10 @@ class Calibrator:
                     """
                     calibrationOutput.saveCalibration(self.bestPitch,self.bestRoll,self.absDiff,"pitch","roll","diff")
                     """
-                    self.newPitch = self.accumulateX/150
-                    self.newRoll = self.accumulateY/150
+                    self.newPitch = self.accumulateX/100
+                    self.newRoll = self.accumulateY/100
                     self.bestPitch = (self.bestPitch + self.newPitch)
-                    self.bestRoll = (self.bestRoll + self.newRoll)
+                    self.bestRoll = (self.bestPitch + self.newPitch)
                     self.calibIter += 1
 
 
@@ -306,12 +304,14 @@ class Calibrator:
                        values of the copter, disregard first 2
                        iterations for stability
                        """
-                    if (self.calibIter > 0):
-                        self.rollCalib += 0.025*self.newRoll
-                        self.pitchCalib += 0.025*self.newPitch
+                    if (self.calibIter > 2):
+                        self.rollCalib += 0.01*self.newRoll
+                        self.pitchCalib += 0.01*self.newPitch
                         self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.rollCalib)
                         self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.pitchCalib)
-                        logger.debug("incremental calib values #" + str(self.calibIter) + ": Roll: " +str(-self.rollCalib) + "  Pitch: " + str(self.pitchCalib))
+                        logger.debug("incremental calib values: Roll: " +str(-self.rollCalib) + "  Pitch: " + str(self.pitchCalib))
+
+                self.accumulateIter = 0
 
 
             return
@@ -360,34 +360,36 @@ logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
 
 """ End of debug log initial messages """
 
+myCalibrator.bestRoll = 0.0266356999337
+myCalibrator.bestPitch = -0.05
 myCalibrator.myIvyCalNode.IvyInitStart()
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, myCalibrator.bestRoll)
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
 myCalibrator.sendParametersToCopter(0, 0, 0) #We make sure pitch, roll and yaw are 0 at start
-myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, 0)
-myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, 0)
 myCalibrator.unkillCopter()
 time.sleep(3) #For the camera to detect the initial position
 myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
 
 i = 0;
-while(myCalibrator.calibIter <= 100):
+
+while(i<2000):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
         myCalibrator.sendParametersToCopter(0, 0, 0)
-        #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
-        #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
-
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
     #time.sleep(3)
-    myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)
 
-
+if (myCalibrator.calibIter != 0):
+    myCalibrator.bestRoll /= myCalibrator.calibIter
+    myCalibrator.bestPitch /= myCalibrator.calibIter
 myCalibrator.sendParametersToCopter(0, 0, 0)
-logger.debug("final calib values: Roll: " +str(-myCalibrator.rollCalib) + "  Pitch: " + str(myCalibrator.pitchCalib) + " Calib iter: " + str(myCalibrator.calibIter))       
+
+     
 time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
