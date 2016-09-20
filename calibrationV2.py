@@ -359,8 +359,8 @@ myCalibrator.setDeadZone(250,1250,250,950) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
-myCalibrator.bestRoll = 0
-myCalibrator.bestPitch = 0
+myCalibrator.bestRoll = 0*math.pi/180
+myCalibrator.bestPitch = 0*math.pi/180
 myCalibrator.absDiff = 500
 
 """ Set initial messages in the debug log """
@@ -380,16 +380,13 @@ logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
 
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.sendParametersToCopter(0, 0, 0) #We make sure pitch, roll and yaw are 0 at start
-#We send the best calibration parameters from before
-myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
-myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, -myCalibrator.bestPitch)
 myCalibrator.unkillCopter()
 time.sleep(3) #For the camera to detect the initial position
 myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
 
 i = 0;
-while(i<=12000/2):
+while(i<=12000):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
