@@ -60,15 +60,14 @@ logger.addHandler(sessionFileHandler)
 
 
 
+
+"""Initialization for main function"""
 myCalibrator = calibrationV2.Calibrator(logger)
-#myCalibrator.setDeadZone(-0.2,1.0,-0.1,2.1) #minX, maxX, minY, maxY
-myCalibrator.setDeadZone(250,1250,250,950) #minX, maxX, minY, maxY
+myCalibrator.setDeadZone(300,1250,250,950) #minX, maxX, minY, maxY
 myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
-myCalibrator.bestRoll = 0*math.pi/180
-myCalibrator.bestPitch = 0*math.pi/180
-myCalibrator.absDiff = 500
+
 
 """ Reading previous best calibration parameters, uncomment if you want to use it """
 """
@@ -104,14 +103,14 @@ myCalibrator.sendStartMode() #I uncommented this for simulation purposes
 time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
 
 i = 0;
-while(i<=12000):
+while(myCalibrator.calibIter <= 100):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
         myCalibrator.killCopter()
         myCalibrator.sendParametersToCopter(0, 0, 0)
         #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
         #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
-        
+
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
     #time.sleep(3)
@@ -119,13 +118,9 @@ while(i<=12000):
     i=i+1
     time.sleep(myCalibrator.pollingTime)
 
-if (myCalibrator.calibIter != 0):
-    myCalibrator.bestRoll /= myCalibrator.calibIter
-    myCalibrator.bestPitch /= myCalibrator.calibIter
+
 myCalibrator.sendParametersToCopter(0, 0, 0)
-#myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
-#myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
-logger.debug("final calib values: Roll: " +str(-myCalibrator.bestRoll) + "  Pitch: " + str(myCalibrator.bestPitch) + " Calib iter: " + str(myCalibrator.calibIter))       
+logger.debug("final calib values: Roll: " +str(-myCalibrator.rollCalib) + "  Pitch: " + str(myCalibrator.pitchCalib) + " Calib iter: " + str(myCalibrator.calibIter))       
 time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
