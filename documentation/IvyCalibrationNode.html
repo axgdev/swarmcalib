@@ -1,0 +1,85 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module IvyCalibrationNode</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>IvyCalibrationNode</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/media/sf_D_DRIVE/DigitalEngineering/SS16/Swarmlab/swarmcalib/ivyModules/IvyCalibrationNode.py">/media/sf_D_DRIVE/DigitalEngineering/SS16/Swarmlab/swarmcalib/ivyModules/IvyCalibrationNode.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="rospy.html">rospy</a><br>
+</td><td width="25%" valign=top><a href="signal.html">signal</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="IvyCalibrationNode.html#IvyCalibrationNode">IvyCalibrationNode</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="IvyCalibrationNode">class <strong>IvyCalibrationNode</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="IvyCalibrationNode-IvyGetPos"><strong>IvyGetPos</strong></a>(self)</dt><dd><tt>Simply&nbsp;returns&nbsp;the&nbsp;position&nbsp;grabbed&nbsp;via&nbsp;ROS&nbsp;to&nbsp;the&nbsp;caller</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvyInitStart"><strong>IvyInitStart</strong></a>(self)</dt><dd><tt>Initializes&nbsp;the&nbsp;Ivy&nbsp;Server&nbsp;and&nbsp;ROS&nbsp;Subscriber<br>
+&nbsp;<br>
+Should&nbsp;only&nbsp;be&nbsp;called&nbsp;once&nbsp;per&nbsp;session.</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvyInitStop"><strong>IvyInitStop</strong></a>(self)</dt><dd><tt>Stops&nbsp;the&nbsp;Ivy&nbsp;Server.</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvySendCalParams"><strong>IvySendCalParams</strong></a>(self, AC_ID, turn_leds, roll, pitch, yaw)</dt></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvySendCalib"><strong>IvySendCalib</strong></a>(self, param_ID, AC_ID, value)</dt><dd><tt>Sends&nbsp;the&nbsp;given&nbsp;parameter&nbsp;via&nbsp;Ivy<br>
+&nbsp;<br>
+AC_ID:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID&nbsp;of&nbsp;the&nbsp;aricraft&nbsp;to&nbsp;be&nbsp;calibrated<br>
+param_ID:&nbsp;&nbsp;&nbsp;ID&nbsp;of&nbsp;the&nbsp;parameter&nbsp;to&nbsp;be&nbsp;calibrated<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phi&nbsp;&nbsp;&nbsp;=&nbsp;58&nbsp;roll<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta&nbsp;=&nbsp;59&nbsp;pitch<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;psi&nbsp;&nbsp;&nbsp;=&nbsp;60&nbsp;yaw<br>
+value:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value&nbsp;to&nbsp;be&nbsp;set&nbsp;for&nbsp;the&nbsp;parameter&nbsp;!in&nbsp;degrees!</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvySendKill"><strong>IvySendKill</strong></a>(self, AC_ID)</dt><dd><tt>Sends&nbsp;a&nbsp;kill&nbsp;message&nbsp;to&nbsp;the&nbsp;aircraft</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvySendSwitchBlock"><strong>IvySendSwitchBlock</strong></a>(self, AC_ID, block_ID)</dt><dd><tt>Sends&nbsp;a&nbsp;message&nbsp;to&nbsp;switch&nbsp;the&nbsp;flight&nbsp;plan</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-IvySendUnKill"><strong>IvySendUnKill</strong></a>(self, AC_ID)</dt><dd><tt>Sends&nbsp;an&nbsp;unkill&nbsp;message&nbsp;to&nbsp;the&nbsp;aircraft</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-handlePos"><strong>handlePos</strong></a>(self, data)</dt><dd><tt>Callback&nbsp;for&nbsp;the&nbsp;ROS&nbsp;subscriber.</tt></dd></dl>
+
+<dl><dt><a name="IvyCalibrationNode-initRosSub"><strong>initRosSub</strong></a>(self)</dt><dd><tt>Initializes&nbsp;the&nbsp;ROS&nbsp;subscriber.<br>
+&nbsp;<br>
+Is&nbsp;automatically&nbsp;called&nbsp;during&nbsp;the&nbsp;Ivy&nbsp;initialization&nbsp;process<br>
+in&nbsp;<a href="#IvyCalibrationNode-IvyInitStart">IvyInitStart</a>().</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>IvyApplicationConnected</strong> = 1<br>
+<strong>IvyApplicationDisconnected</strong> = 2<br>
+<strong>IvyRegexpAdded</strong> = 3<br>
+<strong>IvyRegexpRemoved</strong> = 4</td></tr></table>
+</body></html>

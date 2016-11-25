@@ -1,0 +1,56 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module calibrationOutput</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>calibrationOutput</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/media/sf_D_DRIVE/DigitalEngineering/SS16/Swarmlab/swarmcalib/calibrationOutput.py">/media/sf_D_DRIVE/DigitalEngineering/SS16/Swarmlab/swarmcalib/calibrationOutput.py</a></font></td></tr></table>
+    <p><tt>Module&nbsp;use&nbsp;to&nbsp;import&nbsp;and&nbsp;export&nbsp;data</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="datetime.html">datetime</a><br>
+<a href="json.html">json</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="threading.html">threading</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-getCalibrationFilename"><strong>getCalibrationFilename</strong></a>()</dt></dl>
+ <dl><dt><a name="-getCalibrationListFromFile"><strong>getCalibrationListFromFile</strong></a>(filename)</dt><dd><tt>Load&nbsp;calibration&nbsp;point&nbsp;list&nbsp;from&nbsp;file.&nbsp;If&nbsp;no&nbsp;filename&nbsp;given<br>
+the&nbsp;program&nbsp;takes&nbsp;the&nbsp;last&nbsp;file&nbsp;of&nbsp;the&nbsp;folder</tt></dd></dl>
+ <dl><dt><a name="-getFormattedTimeStamp"><strong>getFormattedTimeStamp</strong></a>()</dt></dl>
+ <dl><dt><a name="-getListOfFilesInDir"><strong>getListOfFilesInDir</strong></a>(self, filePath)</dt></dl>
+ <dl><dt><a name="-getScriptPath"><strong>getScriptPath</strong></a>()</dt></dl>
+ <dl><dt><a name="-loadCalibration"><strong>loadCalibration</strong></a>()</dt><dd><tt>Here&nbsp;we&nbsp;dont&nbsp;use&nbsp;the&nbsp;threaded&nbsp;version&nbsp;because&nbsp;we&nbsp;need&nbsp;to&nbsp;make&nbsp;sure&nbsp;the<br>
+parameters&nbsp;are&nbsp;read&nbsp;in&nbsp;the&nbsp;program</tt></dd></dl>
+ <dl><dt><a name="-loadObject"><strong>loadObject</strong></a>(filename)</dt></dl>
+ <dl><dt><a name="-loadObjectThreaded"><strong>loadObjectThreaded</strong></a>(filename)</dt><dd><tt>This&nbsp;would&nbsp;not&nbsp;work&nbsp;well&nbsp;as&nbsp;returning&nbsp;values&nbsp;from&nbsp;a&nbsp;thread&nbsp;is&nbsp;something<br>
+special,&nbsp;and&nbsp;actually&nbsp;not&nbsp;desired&nbsp;for&nbsp;our&nbsp;application</tt></dd></dl>
+ <dl><dt><a name="-saveCalibration"><strong>saveCalibration</strong></a>(calibrationTuple)</dt></dl>
+ <dl><dt><a name="-saveObject"><strong>saveObject</strong></a>(obj, filename)</dt><dd><tt>Dumps&nbsp;the&nbsp;object&nbsp;to&nbsp;a&nbsp;Json&nbsp;file&nbsp;named&nbsp;filename,&nbsp;if&nbsp;no&nbsp;filename&nbsp;is<br>
+provided&nbsp;then&nbsp;a&nbsp;name&nbsp;with&nbsp;a&nbsp;timestap&nbsp;is&nbsp;created</tt></dd></dl>
+ <dl><dt><a name="-saveObjectThreaded"><strong>saveObjectThreaded</strong></a>(obj, filename)</dt></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>CALIBRATION_FOLDER</strong> = 'CalibrationFiles'</td></tr></table>
+</body></html>
