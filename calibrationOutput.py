@@ -108,6 +108,9 @@ class CSVWriter:
     def setHeader(self, headerTuple):
         self.insert(0,headerTuple)
 
+    def setFilenamePostLetters(self,postletters):
+        self.filename = os.path.join(self.dataOutputFolder,getFormattedTimeStamp()+postletters+'.csv')
+
     def saveToFile(self):
         make_sure_path_exists(self.dataOutputFolder)
         csvFile = open(self.filename, "a")
