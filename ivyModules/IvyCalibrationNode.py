@@ -4,6 +4,7 @@ from ivy.std_api import *
 from std_msgs.msg import String
 from geometry_msgs.msg import Pose2D
 import time
+import kill_log
 
 class IvyCalibrationNode:
     def IvyInitStart(self):
@@ -25,6 +26,8 @@ class IvyCalibrationNode:
             self.IvyInitStop()
         time.sleep(1)
         print('Ivy Calibration Node ready!')
+        self.myKillLog = kill_log.KillLog()
+        self.myKillLog.startLog()
 
 
     def IvyInitStop(self):
@@ -32,6 +35,7 @@ class IvyCalibrationNode:
         """
         time.sleep(1)
         IvyStop()
+        self.myKillLog.stopLog()
 
 
     def handlePos(self, data):
@@ -40,6 +44,7 @@ class IvyCalibrationNode:
         """
         global copterPos
         copterPos=data
+        self.myKillLog.setPositionThreaded([copterPos.x,copterPos.y,copterPos.theta])
 
 
     def initRosSub(self):
@@ -104,6 +109,7 @@ class IvyCalibrationNode:
         IvySendMsg('dl KILL %d 1' %
                     (AC_ID
                     ))
+        self.myKillLog.killSignalReceived = True
 
     def IvySendCalParams(self, AC_ID, turn_leds, roll, pitch, yaw):
         IvySendMsg('dl CALPARAMS %d %d %f %f %f' %
