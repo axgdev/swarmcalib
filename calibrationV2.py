@@ -6,19 +6,11 @@
 
 import finkenPID
 import time
-#import json  #Remove unused module
-import datetime
 #To save the calibration parameters
 import calibrationOutput
 
 """ Logging imports """
 import logging
-import os
-
-#ROS libraries... maybe the communication python files should have it
-import rospy
-from std_msgs.msg import String
-from geometry_msgs.msg import Pose2D
 #Ivy cal node
 import ivyModules.IvyCalibrationNode
 import math
@@ -137,10 +129,10 @@ class Calibrator:
             position values from the tracking software, then we save them
             in the class variables copterXPos, copterYPos and copterTheta
             """
-        myObj = self.myIvyCalNode.IvyGetPos()
-        self.copterXPos = myObj.x
-        self.copterYPos = myObj.y
-        self.copterTheta = myObj.theta
+        posList = self.myIvyCalNode.IvyGetPosList()
+        self.copterXPos = posList[0]
+        self.copterYPos = posList[1]
+        self.copterTheta = posList[2]
         #self.logger.debug("X: "+str(self.copterXPos) + " Y: "+str(self.copterYPos) + " Theta: " + str(self.copterTheta))
 
     def killCopter(self):
@@ -187,6 +179,12 @@ class Calibrator:
         self.myIvyCalNode.IvySendCalParams(self.aircraftID, 0, rollToSend, pitchToSend, yawToSend)
         return
 
+    def sendCalibrationToCopter(self,pitchCalib,rollCalib):
+        """Interface function to Ivy python node. Integer 58 represents roll,
+           and integer 59 represents pitch
+        """
+        self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, rollCalib)
+        self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, pitchCalib)
 
     """Auxiliary functions for the calibration routine:"""
     def isInInternalZone(self,errorX,errorY):
@@ -310,8 +308,7 @@ class Calibrator:
                     if (self.calibIter > 0):
                         self.rollCalib += 0.025*self.newRoll
                         self.pitchCalib += 0.025*self.newPitch
-                        self.myIvyCalNode.IvySendCalib(self.aircraftID, 58, -self.rollCalib)
-                        self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.pitchCalib)
+                        self.sendCalibrationToCopter(self.pitchCalib,-self.rollCalib)
                         self.logger.debug("incremental calib values #" + str(self.calibIter) + ": Roll: " +str(-self.rollCalib) + "  Pitch: " + str(self.pitchCalib))
                         self.logger.debug("Camera parameters X:" + str(self.copterXPos) + " Y:" + str(self.copterYPos))
         elif (self.inInternalZone):

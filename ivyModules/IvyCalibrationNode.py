@@ -70,6 +70,14 @@ class IvyCalibrationNode:
             print("CopterPos not yed defined! (No data from ROS?):")
             print(str(e))
 
+    def IvyGetPosList(self):
+        """Returns the position to a list for less dependency with ros
+           Returns
+           -------
+           List
+        """
+        position = self.IvyGetPos()
+        return [position.x, position.y, position.theta]
 
     def IvySendCalib(self,param_ID, AC_ID, value):
         """Sends the given parameter via Ivy
@@ -115,7 +123,7 @@ class IvyCalibrationNode:
 
     def IvySendSwitchBlock(self, AC_ID, block_ID):
         """Sends a message to switch the flight plan
-        
+
         """
         IvySendMsg('dl BLOCK %d %d' %
                     (block_ID,
