@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  calibration.py
-#  
+#
 
 import finkenPID
 import time
@@ -47,7 +47,7 @@ class Calibrator:
         self.emptyBlockInteger = 1
         self.landingBlockInteger = 4
 
-        """calibration routine constants and buffers:"""
+        """Calibration routine constants and buffers:"""
         self.internalZoneSize = 150.0
         self.inInternalZone = False
         self.inExternalZone = True
@@ -61,8 +61,22 @@ class Calibrator:
         self.calibIter = 0
         self.rollCalib = 0
         self.pitchCalib = 0
-        self.logger = logger
 
+        """Variables for output"""
+        self.logger = logger
+        self.totalIterations = 0
+        self.initialTime = time.time()
+        self.dataFile = calibrationOutput.CSVWriter()
+        self.dataFile.setHeader(['currentTime', 'timeDifference', 'totalIterations',
+                              'accumulateIter', 'calibIter', 'inInternalZone',
+                              'copterXPos', 'copterYPos', 'copterTheta',
+                              'errorX', 'errorY', 'Xdiff', 'Ydiff',
+                              'accumulateX', 'accumulateY',
+                              'newPitch', 'newRoll',
+                              'bestPitch', 'bestRoll',
+                              '-rollToSend', 'pitchToSend',
+                              '-calRollToSend', 'calPitchToSend',
+                              '-rollCalib', 'pitchCalib'])
 
     def setBasePosition(self, posX, posY):
         """PID Setpoint. Where the copter should be. In theory this point
@@ -190,6 +204,21 @@ class Calibrator:
             return True
         return False
 
+    def outputData(self, errorX, errorY, rollToSend, pitchToSend, calRollToSend, calPitchToSend):
+        currentTime = time.time()
+        timeDifference = currentTime - self.initialTime
+        self.dataFile.append([currentTime, timeDifference, self.totalIterations,
+                              self.accumulateIter, self.calibIter, self.inInternalZone,
+                              self.copterXPos, self.copterYPos, self.copterTheta,
+                              errorX, errorY, self.Xdiff, self.Ydiff,
+                              self.accumulateX, self.accumulateY,
+                              self.newPitch, self.newRoll,
+                              self.bestPitch, self.bestRoll,
+                              -rollToSend, pitchToSend,
+                              -calRollToSend, calPitchToSend,
+                              -self.rollCalib, self.pitchCalib])
+        self.totalIterations += 1
+
     """Main Calibration logic:"""
     def followTarget(self):
         """ One of the main functions of the calibration. Once we have
@@ -214,6 +243,14 @@ class Calibrator:
         errorX = newCoord.item(0)
         errorY = newCoord.item(1)
 
+        """Get output from the controllers based on the error we have"""
+        pitchToSend = self.targetXController.step(errorX, self.pollingTime)
+        rollToSend = self.targetYController.step(errorY,self.pollingTime)
+        """ Send parameters to copter, our view of the roll is inverted
+            what it should be on the copter, so we change the roll sign
+        """
+        self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
+
         if (self.isInInternalZone(errorX,errorY)):
 
             if (self.inInternalZone == False):  #entering internal zone so reset the Iterator and position buffer
@@ -223,12 +260,8 @@ class Calibrator:
                 self.accumulateY = 0
                 self.copterXOld = self.copterXPos
                 self.copterYOld = self.copterYPos
-                
+
             self.inInternalZone = True
-            
-            rollToSend = self.targetXController.step(errorY,self.pollingTime)
-            pitchToSend = self.targetYController.step(errorX, self.pollingTime)
-            self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
 
             """Transform from degrees to rad"""
             calRollToSend=rollToSend*(math.pi/180)
@@ -238,7 +271,7 @@ class Calibrator:
             self.accumulateX = self.accumulateX + calPitchToSend
             self.accumulateY = self.accumulateY + calRollToSend
             self.accumulateIter += 1
-            
+
 
             if (self.accumulateIter >= 100):
                 """after 100 iterations, check absolute movement and,
@@ -252,7 +285,7 @@ class Calibrator:
                     """movement below treshold for 100 iterations,
                        use accumulated PID values for calibration
                        """
-                    """ Saving calibration parameters to file. No worries this 
+                    """ Saving calibration parameters to file. No worries this
                         is non blocking call, it runs in separate thread.
                         Important to save it everytime just in case the app is
                         interrumpted, uncomment if you want to use it
@@ -281,16 +314,6 @@ class Calibrator:
                         self.myIvyCalNode.IvySendCalib(self.aircraftID, 59, self.pitchCalib)
                         self.logger.debug("incremental calib values #" + str(self.calibIter) + ": Roll: " +str(-self.rollCalib) + "  Pitch: " + str(self.pitchCalib))
                         self.logger.debug("Camera parameters X:" + str(self.copterXPos) + " Y:" + str(self.copterYPos))
-
-
-            return
         elif (self.inInternalZone):
             self.inInternalZone = False
-
-        """Get output from the controllers based on the error we have"""
-        rollToSend = self.targetYController.step(errorY, self.pollingTime)
-        pitchToSend = self.targetXController.step(errorX, self.pollingTime)
-        """ Send parameters to copter, our view of the roll is inverted
-            what it should be on the copter, so we change the roll sign
-            """
-        self.sendParametersToCopter(pitchToSend, -rollToSend, 0)
+        self.outputData(errorX, errorY, rollToSend, pitchToSend, calRollToSend, calPitchToSend)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  calibration.py
-#  
+#
 
 import finkenPID
 import time
@@ -125,5 +125,6 @@ time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
 myCalibrator.killCopter()
+myCalibrator.dataFile.saveToFile()
 logger.info("ProgramEnded")
 raise SystemExit()
