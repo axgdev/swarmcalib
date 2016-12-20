@@ -4,10 +4,7 @@
 #  calibration.py
 #
 
-import finkenPID
 import time
-#import json  #Remove unused module
-import datetime
 #To save the calibration parameters
 import calibrationOutput
 import calibrationV2
@@ -16,14 +13,9 @@ import calibrationV2
 import logging
 import os
 
-#ROS libraries... maybe the communication python files should have it
-import rospy
-from std_msgs.msg import String
-from geometry_msgs.msg import Pose2D
 #Ivy cal node
 import ivyModules.IvyCalibrationNode
 import math
-import numpy
 
 """ Superior logging capabilities. Way better than prints :P """
 
@@ -33,8 +25,7 @@ logger = logging.getLogger('cal')
 logger.setLevel(logging.DEBUG)
 
 #Create the log folder if it does not exist
-if not os.path.exists("logs"):
-    os.makedirs("logs")
+calibrationOutput.make_sure_path_exists("logs")
 
 # create global file handler which logs debug messages
 globalFileHandler = logging.FileHandler("logs/global.log")
@@ -57,8 +48,6 @@ sessionFileHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
 logger.addHandler(globalFileHandler)
 logger.addHandler(sessionFileHandler)
-
-
 
 
 """Initialization for main function"""
@@ -120,7 +109,7 @@ while(myCalibrator.calibIter <= 100):
 
 
 myCalibrator.sendParametersToCopter(0, 0, 0)
-logger.debug("final calib values: Roll: " +str(-myCalibrator.rollCalib) + "  Pitch: " + str(myCalibrator.pitchCalib) + " Calib iter: " + str(myCalibrator.calibIter))       
+logger.debug("final calib values: Roll: " +str(-myCalibrator.rollCalib) + "  Pitch: " + str(myCalibrator.pitchCalib) + " Calib iter: " + str(myCalibrator.calibIter))
 time.sleep(1)
 myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrator.landingBlockInteger)
 time.sleep(2)
