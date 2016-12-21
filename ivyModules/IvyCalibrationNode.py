@@ -27,7 +27,6 @@ class IvyCalibrationNode:
         time.sleep(1)
         print('Ivy Calibration Node ready!')
         self.myKillLog = kill_log.KillLog()
-        self.myKillLog.startLog()
 
 
     def IvyInitStop(self):
@@ -35,7 +34,7 @@ class IvyCalibrationNode:
         """
         time.sleep(1)
         IvyStop()
-        self.myKillLog.stopLog()
+        self.myKillLog.saveLog()
 
 
     def handlePos(self, data):
