@@ -4,6 +4,10 @@ from ivy.std_api import *
 from std_msgs.msg import String
 from geometry_msgs.msg import Pose2D
 import time
+"""kill_log resides in the upper directory to this script"""
+import os
+parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.sys.path.insert(0,parentdir)
 import kill_log
 
 class IvyCalibrationNode:
