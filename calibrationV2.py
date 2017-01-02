@@ -74,8 +74,8 @@ class Calibrator:
                               'accumulateX', 'accumulateY',
                               'newPitch', 'newRoll',
                               'bestPitch', 'bestRoll',
-                              '-rollToSendRad', 'pitchToSendRad',
-                              '-calRollToSendDeg', 'calPitchToSendDeg',
+                              '-rollToSendDeg', 'pitchToSendDeg',
+                              '-calRollToSendRad', 'calPitchToSendRad',
                               '-rollCalib', 'pitchCalib'])
 
     def setBasePosition(self, posX, posY):
