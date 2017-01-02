@@ -9,7 +9,7 @@ Swarm Calibration project
         - Turning front copter leds to green and back to red.
         - Control of copter pitch, roll, yaw remotely. This is added to
           remote control, mening control with both is possible.
-2.  Go to paparazzi folder, type in console: su sh conf/system/ftdi.sh
+2.  Go to paparazzi folder, type in console: sudo sh conf/system/ftdi.sh
     This needs a password. Get the password from someone in swarmlab.
 3.  Run paparazzi, type in console: ./paparazzi
 4.  Note the aircraftID in the upper left side of the paparazzi window,
