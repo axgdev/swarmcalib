@@ -11,6 +11,9 @@ os.sys.path.insert(0,parentdir)
 import kill_log
 
 class IvyCalibrationNode:
+    def __init__(self):
+        self.myKillLog = kill_log.KillLog()
+    
     def IvyInitStart(self):
         """ Initializes the Ivy Server and ROS Subscriber
 
@@ -30,7 +33,6 @@ class IvyCalibrationNode:
             self.IvyInitStop()
         time.sleep(1)
         print('Ivy Calibration Node ready!')
-        self.myKillLog = kill_log.KillLog()
 
 
     def IvyInitStop(self):
@@ -38,7 +40,6 @@ class IvyCalibrationNode:
         """
         time.sleep(1)
         IvyStop()
-        self.myKillLog.saveLog()
 
 
     def handlePos(self, data):
@@ -112,7 +113,9 @@ class IvyCalibrationNode:
         IvySendMsg('dl KILL %d 1' %
                     (AC_ID
                     ))
-        self.myKillLog.killSignalReceived = True
+        
+    def SetInDeadZone(self,inDeadZone):
+        self.myKillLog.inDeadZone = inDeadZone
 
     def IvySendCalParams(self, AC_ID, turn_leds, roll, pitch, yaw):
         IvySendMsg('dl CALPARAMS %d %d %f %f %f' %
@@ -138,3 +141,6 @@ class IvyCalibrationNode:
                     (block_ID,
                      AC_ID,
                      ))
+                     
+    def SaveIvyKillLog(self):
+        self.myKillLog.saveLog()

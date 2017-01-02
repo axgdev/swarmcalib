@@ -53,6 +53,14 @@ class Calibrator:
         self.calibIter = 0
         self.rollCalib = 0
         self.pitchCalib = 0
+        
+        """Variables for output"""
+        self.Xdiff = 0
+        self.Ydiff = 0
+        self.newPitch = 0
+        self.newRoll = 0
+        self.bestPitch = 0
+        self.bestRoll = 0
 
         """Variables for output"""
         self.logger = logger
@@ -66,8 +74,8 @@ class Calibrator:
                               'accumulateX', 'accumulateY',
                               'newPitch', 'newRoll',
                               'bestPitch', 'bestRoll',
-                              '-rollToSend', 'pitchToSend',
-                              '-calRollToSend', 'calPitchToSend',
+                              '-rollToSendRad', 'pitchToSendRad',
+                              '-calRollToSendDeg', 'calPitchToSendDeg',
                               '-rollCalib', 'pitchCalib'])
 
     def setBasePosition(self, posX, posY):
@@ -202,7 +210,7 @@ class Calibrator:
             return True
         return False
 
-    def outputData(self, errorX, errorY, rollToSend, pitchToSend, calRollToSend, calPitchToSend):
+    def outputData(self, errorX, errorY, rollToSend, pitchToSend):
         currentTime = time.time()
         timeDifference = currentTime - self.initialTime
         self.dataFile.append([currentTime, timeDifference, self.totalIterations,
@@ -213,7 +221,7 @@ class Calibrator:
                               self.newPitch, self.newRoll,
                               self.bestPitch, self.bestRoll,
                               -rollToSend, pitchToSend,
-                              -calRollToSend, calPitchToSend,
+                              -rollToSend*(math.pi/180), pitchToSend*(math.pi/180),
                               -self.rollCalib, self.pitchCalib])
         self.totalIterations += 1
 
@@ -313,4 +321,4 @@ class Calibrator:
                         self.logger.debug("Camera parameters X:" + str(self.copterXPos) + " Y:" + str(self.copterYPos))
         elif (self.inInternalZone):
             self.inInternalZone = False
-        self.outputData(errorX, errorY, rollToSend, pitchToSend, calRollToSend, calPitchToSend)
+        self.outputData(errorX, errorY, rollToSend, pitchToSend)

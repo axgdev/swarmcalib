@@ -95,6 +95,7 @@ i = 0;
 while(myCalibrator.calibIter <= 100):
     myCalibrator.getXYCoordinates()
     if (myCalibrator.isInDeadZone()):
+        myCalibrator.myIvyCalNode.SetInDeadZone(True)
         myCalibrator.killCopter()
         myCalibrator.sendParametersToCopter(0, 0, 0)
         #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
@@ -115,5 +116,11 @@ myCalibrator.myIvyCalNode.IvySendSwitchBlock(myCalibrator.aircraftID,myCalibrato
 time.sleep(2)
 myCalibrator.killCopter()
 myCalibrator.dataFile.saveToFile()
+print("File saved")
+myCalibrator.myIvyCalNode.SaveIvyKillLog()
 logger.info("ProgramEnded")
+try:
+    myCalibrator.myIvyCalNode.IvyInitStop()
+except:
+    print("Ivy was already killed?")
 raise SystemExit()

@@ -98,7 +98,7 @@ class CSVWriter:
        on some functions on CalibrationOutput Python script.
     """
     def __init__(self):
-        self.dataOutputFolder = 'csvOutput'
+        self.dataOutputFolder = os.path.join(getScriptPath(),'csvOutput')
         self.filename = os.path.join(self.dataOutputFolder,getFormattedTimeStamp()+'.csv')
         self.rows = []
 
@@ -106,7 +106,7 @@ class CSVWriter:
         self.rows.append(tupleToAppend)
 
     def setHeader(self, headerTuple):
-        self.insert(0,headerTuple)
+        self.rows.insert(0,headerTuple)
 
     def setFilenamePostLetters(self,postletters):
         self.filename = os.path.join(self.dataOutputFolder,getFormattedTimeStamp()+postletters+'.csv')
