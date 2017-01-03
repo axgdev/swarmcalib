@@ -84,8 +84,20 @@ logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
 
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.sendParametersToCopter(0, 0, 0) #We make sure pitch, roll and yaw are 0 at start
+#Uncomment for first run
+#"""
 myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, 0)
 myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, 0)
+#"""
+
+#Uncomment for after runs, and put the values obtained in the previous run
+"""
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, 0.0164198904)
+myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, -0.0099475704)
+myCalibrator.rollCalib = -0.0164198904
+myCalibrator.pitchCalib = -0.0099475704 #First run
+"""
+
 myCalibrator.unkillCopter()
 time.sleep(3) #For the camera to detect the initial position
 myCalibrator.sendStartMode() #I uncommented this for simulation purposes
