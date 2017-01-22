@@ -37,8 +37,6 @@ sessionFileHandler.setLevel(logging.DEBUG)
 consoleHandler = logging.StreamHandler()
 consoleHandler.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
-#Use this formatter for showing the name of the calibration script
-#formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 """ Formatter without name and level on each stamp (cleaner, shorter log)"""
 formatter = logging.Formatter("%(asctime)s - %(message)s")
 consoleHandler.setFormatter(formatter)
@@ -57,16 +55,6 @@ myCalibrator.setBasePosition(750,600)
 myCalibrator.setPollingTime(0.005) #optimum: 0.005
 myCalibrator.setAircraftID(5)
 
-
-""" Reading previous best calibration parameters, uncomment if you want to use it """
-"""
-inputParams = calibrationOutput.loadCalibration()
-if (len(inputParams) > 1)
-    myCalibrator.bestPitch = inputParams[0]*math.pi/180
-    myCalibrator.bestRoll = inputParams[1]*math.pi/180
-    myCalibrator.absDiff = inputParams[2]*math.pi/180
-"""
-
 """ Set initial messages in the debug log """
 logger.debug("*********NEW SESSION*********")
 logger.debug("Deadzone-> minX=%f, maxX=%f, minY=%f, maxY=%f" %
@@ -84,25 +72,16 @@ logger.debug("XPID = %f, %f, %f / YPID = %f, %f, %f" %
 
 myCalibrator.myIvyCalNode.IvyInitStart()
 myCalibrator.sendParametersToCopter(0, 0, 0) #We make sure pitch, roll and yaw are 0 at start
-#Uncomment for first run
-#"""
+#Calibration parameters are set to Zero
 myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, 0)
 myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, 0)
-#"""
-
-#Uncomment for after runs, and put the values obtained in the previous run
-"""
-myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, 0.0164198904)
-myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, -0.0099475704)
-myCalibrator.rollCalib = -0.0164198904
-myCalibrator.pitchCalib = -0.0099475704 #First run
-"""
 
 myCalibrator.unkillCopter()
 time.sleep(3) #For the camera to detect the initial position
-myCalibrator.sendStartMode() #I uncommented this for simulation purposes
-time.sleep(1.75) #When the copter turns on, there are no lights until a few seconds
+myCalibrator.sendStartMode()
+time.sleep(1.75)
 
+"""Start of calibration loop"""
 i = 0;
 while(myCalibrator.calibIter <= 100):
     myCalibrator.getXYCoordinates()
@@ -110,16 +89,12 @@ while(myCalibrator.calibIter <= 100):
         myCalibrator.myIvyCalNode.SetInDeadZone(True)
         myCalibrator.killCopter()
         myCalibrator.sendParametersToCopter(0, 0, 0)
-        #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 58, -myCalibrator.bestRoll)
-        #myCalibrator.myIvyCalNode.IvySendCalib(myCalibrator.aircraftID, 59, myCalibrator.bestPitch)
-
         myCalibrator.myIvyCalNode.IvyInitStop()
         break;
-    #time.sleep(3)
     myCalibrator.followTarget()
     i=i+1
     time.sleep(myCalibrator.pollingTime)
-
+"""End of Calibration loop"""
 
 myCalibrator.sendParametersToCopter(0, 0, 0)
 logger.debug("final calib values: Roll: " +str(-myCalibrator.rollCalib) + "  Pitch: " + str(myCalibrator.pitchCalib) + " Calib iter: " + str(myCalibrator.calibIter))

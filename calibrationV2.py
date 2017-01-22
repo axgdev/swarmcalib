@@ -291,14 +291,6 @@ class Calibrator:
                     """movement below treshold for 100 iterations,
                        use accumulated PID values for calibration
                        """
-                    """ Saving calibration parameters to file. No worries this
-                        is non blocking call, it runs in separate thread.
-                        Important to save it everytime just in case the app is
-                        interrumpted, uncomment if you want to use it
-                    """
-                    """
-                    calibrationOutput.saveCalibration(self.bestPitch,self.bestRoll,self.absDiff,"pitch","roll","diff")
-                    """
                     self.newPitch = self.accumulateX/100
                     self.newRoll = self.accumulateY/100
                     self.bestPitch = (self.bestPitch + self.newPitch)
